@@ -1,7 +1,7 @@
 CREATE TABLE "users" (
   "id" bigserial PRIMARY KEY,
   "name" varchar NOT NULL,
-  "created_at" timestamptz DEFAULT (now())
+  "createdAt" timestamptz DEFAULT (now())
 );
 
 CREATE TABLE "images" (
