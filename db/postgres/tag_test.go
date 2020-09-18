@@ -1,0 +1,68 @@
+package postgres
+
+import (
+	"database/sql"
+	"testing"
+
+	"github.com/checkrates/Fime/config"
+	"github.com/checkrates/Fime/fime"
+	"github.com/checkrates/Fime/util"
+	"github.com/stretchr/testify/require"
+)
+
+func createTestTag(t *testing.T) fime.Tag {
+	tag := fime.Tag{
+		Name: util.RandomString(4),
+	}
+
+	dal, err := NewStore(config.New().Database.ConnString)
+	err = dal.CreateTag(&tag)
+	require.NoError(t, err)
+	require.NotZero(t, tag.ID)
+
+	return tag
+}
+
+func TestCreateTag(t *testing.T) {
+	createTestTag(t)
+}
+
+func TestGetTag(t *testing.T) {
+	dal, err := NewStore(config.New().Database.ConnString)
+	tag := createTestTag(t)
+	tag2, err := dal.Tag(tag.ID)
+
+	require.NoError(t, err)
+	require.NotEmpty(t, tag2)
+
+	require.Equal(t, tag.ID, tag2.ID)
+	require.Equal(t, tag.Name, tag2.Name)
+}
+
+func TestDeleteTag(t *testing.T) {
+	dal, err := NewStore(config.New().Database.ConnString)
+	tag := createTestTag(t)
+
+	err = dal.DeleteTag(tag.ID)
+	require.NoError(t, err)
+
+	tag2, err := dal.User(tag.ID)
+	require.Error(t, err)
+	require.EqualError(t, err, sql.ErrNoRows.Error())
+	require.Empty(t, tag2)
+}
+
+func TestListTag(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		createTestTag(t)
+	}
+
+	dal, err := NewStore(config.New().Database.ConnString)
+
+	tags, err := dal.Tags(5, 5)
+	require.NoError(t, err)
+
+	for _, tag := range tags {
+		require.NotEmpty(t, tag)
+	}
+}

@@ -1,10 +1,7 @@
 package postgres
 
 import (
-	"fmt"
-
 	"github.com/checkrates/Fime/fime"
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -21,10 +18,10 @@ type ImageStore struct {
 }
 
 // Image return image by id
-func (s *ImageStore) Image(id uuid.UUID) (fime.Image, error) {
+func (s *ImageStore) Image(id int64) (fime.Image, error) {
 	var i fime.Image
 	if err := s.Get(&i, `SELECT * FROM images WHERE id=$1 LIMIT 1`, id); err != nil {
-		return fime.Image{}, fmt.Errorf("error retrieving image: %w", err)
+		return fime.Image{}, err
 	}
 	return i, nil
 }
@@ -32,32 +29,32 @@ func (s *ImageStore) Image(id uuid.UUID) (fime.Image, error) {
 // Images return all images
 func (s *ImageStore) Images(limit int, offset int) ([]fime.Image, error) {
 	var ii []fime.Image
-	if err := s.Get(&ii, `SELECT * FROM images ORDER BY id LIMIT $1 OFFSET $2`, limit, offset); err != nil {
-		return []fime.Image{}, fmt.Errorf("error retrieving images: %w", err)
+	if err := s.Select(&ii, `SELECT * FROM images ORDER BY id LIMIT $1 OFFSET $2`, limit, offset); err != nil {
+		return []fime.Image{}, err
 	}
 	return ii, nil
 }
 
 // CreateImage uploads a new image to the database
 func (s *ImageStore) CreateImage(i *fime.Image) error {
-	if err := s.Get(i, `INSERT INTO images VALUES ($1, $2) RETURNING *`, i.Name, i.URL); err != nil {
-		return fmt.Errorf("error inserting new image: %w", err)
+	if err := s.Get(i, `INSERT INTO images (name, url, owner) VALUES ($1, $2, $3) RETURNING *`, i.Name, i.URL, i.OwnerID); err != nil {
+		return err
 	}
 	return nil
 }
 
 // UpdateImage updates an image
 func (s *ImageStore) UpdateImage(i *fime.Image) error {
-	if err := s.Get(i, `UPDATE images SET name = $1 RETURNING *`, i.Name); err != nil {
-		return fmt.Errorf("error updating image: %w", err)
+	if err := s.Get(i, `UPDATE images SET name = $1 WHERE id=$2 RETURNING *`, i.Name, i.ID); err != nil {
+		return err
 	}
 	return nil
 }
 
 // DeleteImage deletes an image from the database
-func (s *ImageStore) DeleteImage(id uuid.UUID) error {
+func (s *ImageStore) DeleteImage(id int64) error {
 	if _, err := s.Exec(`DELETE FROM images WHERE id = $1`, id); err != nil {
-		return fmt.Errorf("error deleting image: %w", err)
+		return err
 	}
 	return nil
 }

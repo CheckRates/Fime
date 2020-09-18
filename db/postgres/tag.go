@@ -1,10 +1,7 @@
 package postgres
 
 import (
-	"fmt"
-
 	"github.com/checkrates/Fime/fime"
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -21,10 +18,10 @@ type TagStore struct {
 }
 
 // Tag return tag by id
-func (s *TagStore) Tag(id uuid.UUID) (fime.Tag, error) {
+func (s *TagStore) Tag(id int64) (fime.Tag, error) {
 	var t fime.Tag
 	if err := s.Get(&t, `SELECT * FROM tags WHERE id=$1 LIMIT 1`, id); err != nil {
-		return fime.Tag{}, fmt.Errorf("error retrieving tag: %w", err)
+		return fime.Tag{}, err
 	}
 	return t, nil
 }
@@ -32,24 +29,24 @@ func (s *TagStore) Tag(id uuid.UUID) (fime.Tag, error) {
 // Tags return all tags
 func (s *TagStore) Tags(limit int, offset int) ([]fime.Tag, error) {
 	var tt []fime.Tag
-	if err := s.Get(&tt, `SELECT * FROM tags ORDER BY id LIMIT $1 OFFSET $2`, limit, offset); err != nil {
-		return []fime.Tag{}, fmt.Errorf("error retrieving tags: %w", err)
+	if err := s.Select(&tt, `SELECT * FROM tags ORDER BY id LIMIT $1 OFFSET $2`, limit, offset); err != nil {
+		return []fime.Tag{}, err
 	}
 	return tt, nil
 }
 
 // CreateTag uploads a new tag to the database
 func (s *TagStore) CreateTag(t *fime.Tag) error {
-	if err := s.Get(t, `INSERT INTO tags VALUES ($1) RETURNING *`, t.Name); err != nil {
-		return fmt.Errorf("error inserting new tag: %w", err)
+	if err := s.Get(t, `INSERT INTO tags (tag) VALUES ($1) RETURNING *`, t.Name); err != nil {
+		return err
 	}
 	return nil
 }
 
 // DeleteTag deletes an tag from the database
-func (s *TagStore) DeleteTag(id uuid.UUID) error {
+func (s *TagStore) DeleteTag(id int64) error {
 	if _, err := s.Exec(`DELETE FROM tags WHERE id = $1`, id); err != nil {
-		return fmt.Errorf("error deleting tag: %w", err)
+		return err
 	}
 	return nil
 }
