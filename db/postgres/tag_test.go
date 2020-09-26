@@ -27,6 +27,22 @@ func TestCreateTag(t *testing.T) {
 	createTestTag(t)
 }
 
+func TestCreateDuplicatedTag(t *testing.T) {
+	tag1 := createTestTag(t)
+	tag2 := fime.Tag{
+		Name: tag1.Name,
+	}
+
+	dal, err := NewStore(config.New().Database.ConnString)
+	err = dal.CreateTag(&tag2)
+
+	require.NoError(t, err)
+	require.NotEmpty(t, tag2)
+
+	require.Equal(t, tag1.ID, tag2.ID)
+	require.Equal(t, tag1.Name, tag2.Name)
+}
+
 func TestGetTag(t *testing.T) {
 	dal, err := NewStore(config.New().Database.ConnString)
 	tag := createTestTag(t)

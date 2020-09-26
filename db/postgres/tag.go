@@ -37,7 +37,19 @@ func (s *TagStore) Tags(limit int, offset int) ([]fime.Tag, error) {
 
 // CreateTag uploads a new tag to the database
 func (s *TagStore) CreateTag(t *fime.Tag) error {
-	if err := s.Get(t, `INSERT INTO tags (tag) VALUES ($1) RETURNING *`, t.Name); err != nil {
+	// Insert a tag if it does NOT exist, Else return the existing tag
+	statement :=
+		`WITH s AS (
+		SELECT * FROM tags WHERE tag=$1
+	), 
+	i as (
+		INSERT INTO tags(tag) SELECT $1
+			WHERE NOT EXISTS (SELECT 1 FROM s)
+			RETURNING *
+	)
+	SELECT * FROM i UNION ALL SELECT * from s`
+
+	if err := s.Get(t, statement, t.Name); err != nil {
 		return err
 	}
 	return nil
