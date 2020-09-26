@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"testing"
 
-	"github.com/checkrates/Fime/config"
 	"github.com/checkrates/Fime/fime"
 	"github.com/checkrates/Fime/util"
 	"github.com/stretchr/testify/require"
@@ -19,8 +18,7 @@ func createTestImage(t *testing.T) fime.Image {
 		OwnerID: user.ID,
 	}
 
-	dal, err := NewStore(config.New().Database.ConnString)
-	err = dal.CreateImage(&image)
+	err := dal.CreateImage(&image)
 	require.NoError(t, err)
 	require.NotZero(t, image.ID)
 
@@ -32,7 +30,7 @@ func TestCreateImage(t *testing.T) {
 }
 
 func TestGetImage(t *testing.T) {
-	dal, err := NewStore(config.New().Database.ConnString)
+
 	img1 := createTestImage(t)
 	img2, err := dal.Image(img1.ID)
 
@@ -44,13 +42,13 @@ func TestGetImage(t *testing.T) {
 }
 
 func TestUpdateImage(t *testing.T) {
-	dal, err := NewStore(config.New().Database.ConnString)
+
 	img := createTestImage(t)
 
 	beforeImg := img
 	name := util.RandomString(6)
 	img.Name = name
-	err = dal.UpdateImage(&img)
+	err := dal.UpdateImage(&img)
 
 	require.NoError(t, err)
 
@@ -59,10 +57,10 @@ func TestUpdateImage(t *testing.T) {
 }
 
 func TestDeleteImage(t *testing.T) {
-	dal, err := NewStore(config.New().Database.ConnString)
+
 	img1 := createTestImage(t)
 
-	err = dal.DeleteImage(img1.ID)
+	err := dal.DeleteImage(img1.ID)
 	require.NoError(t, err)
 
 	img2, err := dal.Image(img1.ID)
@@ -75,8 +73,6 @@ func TestImageList(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		createTestImage(t)
 	}
-
-	dal, err := NewStore(config.New().Database.ConnString)
 
 	images, err := dal.Images(5, 5)
 	require.NoError(t, err)
