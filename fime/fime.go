@@ -1,6 +1,6 @@
 package fime
 
-// UserStore interface
+// UserStore Interface
 type UserStore interface {
 	User(id int64) (User, error)
 	Users(limit int, offset int) ([]User, error)
@@ -24,4 +24,12 @@ type TagStore interface {
 	Tags(limit int, offset int) ([]Tag, error)
 	CreateTag(t *Tag) error
 	DeleteTag(id int64) error
+}
+
+// ImageTagStore Interface
+type ImageTagStore interface {
+	CreateImageTag(it ImageTag) error
+	DeleteImageTag(it ImageTag) error
+	GetTagsByImageID(imgID int64) ([]Tag, error)
+	GetImagesByTagID(tagID int64) ([]Image, error)
 }
