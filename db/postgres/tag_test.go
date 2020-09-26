@@ -59,7 +59,7 @@ func TestDeleteTag(t *testing.T) {
 	err := dal.DeleteTag(tag.ID)
 	require.NoError(t, err)
 
-	tag2, err := dal.User(tag.ID)
+	tag2, err := dal.Tag(tag.ID)
 	require.Error(t, err)
 	require.EqualError(t, err, sql.ErrNoRows.Error())
 	require.Empty(t, tag2)
