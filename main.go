@@ -1,24 +1,19 @@
 package main
 
 import (
-	"fmt"
+	"net/http"
 
-	"github.com/checkrates/Fime/config"
-	"github.com/checkrates/Fime/db/postgres"
-	"github.com/checkrates/Fime/fime"
-	_ "github.com/lib/pq"
+	"github.com/labstack/echo"
 )
 
 func main() {
-	config := config.New()
-	db, _ := postgres.NewStore(config.Database.ConnString)
+	e := echo.New()
 
-	user := fime.User{
-		Name: "TestCool",
-	}
+	e.GET("/", handleHome)
 
-	db.CreateUser(&user)
-	fmt.Println(user.ID)
-	fmt.Println(user.CreatedAt)
-	fmt.Println(user.Name)
+	e.Start(":8080")
+}
+
+func handleHome(c echo.Context) error {
+	return c.String(http.StatusOK, "Hello")
 }
