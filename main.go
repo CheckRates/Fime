@@ -7,13 +7,26 @@ import (
 )
 
 func main() {
-	e := echo.New()
+	echo := echo.New()
 
-	e.GET("/", handleHome)
+	// Set up static pages
+	echo.Static("/", "./views")
 
-	e.Start(":8080")
+	// Set up API group of handles
+	api := echo.Group("/api/v1")
+	{
+		api.GET("/", handleHome)
+		api.GET("/images", handleImages)
+	}
+
+	// Start server
+	echo.Start(":8080")
 }
 
 func handleHome(c echo.Context) error {
-	return c.String(http.StatusOK, "Hello")
+	return c.String(http.StatusOK, "69 Lmao")
+}
+
+func handleImages(c echo.Context) error {
+	return c.String(http.StatusOK, "This should show all images ")
 }
