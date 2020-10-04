@@ -11,7 +11,9 @@ import (
 
 func createTestUser(t *testing.T) fime.User {
 	user := fime.User{
-		Name: util.RandomString(6),
+		Name:     util.RandomString(6),
+		Email:    util.RandomString(7) + "@email.com",
+		Password: util.RandomString(8),
 	}
 
 	err := dal.CreateUser(&user)

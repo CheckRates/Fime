@@ -37,7 +37,9 @@ func (s *UserStore) Users(limit int, offset int) ([]fime.User, error) {
 
 //CreateUser creates a user in the database
 func (s *UserStore) CreateUser(u *fime.User) error {
-	if err := s.Get(u, `INSERT INTO users (name) VALUES ($1) RETURNING *`, u.Name); err != nil {
+	err := s.Get(u, `INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *`,
+		u.Name, u.Email, u.Password)
+	if err != nil {
 		return err
 	}
 	return nil
