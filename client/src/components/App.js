@@ -19,10 +19,19 @@ class App extends React.Component {
     });
   };
 
+  deleteImage = (key) => {
+    const images = {...this.state.images};
+    delete images[key];
+    this.setState({
+      images: images
+    });
+  };
+
   // DEBUG: Function
   loadSample = () => {
     this.setState({images: sampleImages})
   };
+  //==================//
 
   render() {
     return (
@@ -33,6 +42,7 @@ class App extends React.Component {
           <Repository 
             images={this.state.images}
             addImage={this.addImage} 
+            deleteImage = {this.deleteImage}
             loadSample={this.loadSample}/>
           <TagDisplay/>
       </div>

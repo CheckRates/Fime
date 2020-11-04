@@ -2,12 +2,14 @@ import React from 'react';
 
 class ImagePost extends React.Component {
     render() {
+        const { url, name } = this.props.info;
         return (
-            <div className="single-image">
-                <img src="https://camo.githubusercontent.com/e83482e80ab2ed5bd3d9781a3b4602cdcb3407aa/687474703a2f2f692e696d6775722e636f6d2f485379686177742e6a7067" alt="Cool Gopher"></img>
-                <h3 className="imageName">Test</h3>
-                <h3 className="imageDate">2020-09-29</h3>
-            </div>
+            <li className="single-image">
+                <img src={url}  alt={name}></img>
+                <h3 className="imageName">{name}</h3>
+                <button onClick={() => this.props.deleteImage(this.props.index)}>Delete Image</button>
+                {/*DEBUG: GET THE DATA FROM API <h3 className="imageDate">{this.image.date}</h3>*/}
+            </li>
         )
     }
 }

@@ -6,11 +6,13 @@ class AddImageForm extends React.Component {
 
     postImage = (event) => {
         event.preventDefault();
+
+        // Get image data from form
         const image = {
             name: this.nameRef.current.value,
             url: this.urlRef.current.value,
         }
-        // Finaly add the image and refresh form
+        // Finaly, add the image and refresh form
         this.props.addImage(image);
         event.currentTarget.reset();
     }

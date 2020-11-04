@@ -12,7 +12,13 @@ class Repository extends React.Component {
                     Load Image Samples
                 </button>   
                 <ul className="images">
-                    {Object.keys(this.props.images).map(key => <ImagePost key={key}>{key}</ImagePost>)}
+                    {Object.keys(this.props.images).map(key => 
+                        <ImagePost 
+                            key={key} 
+                            index={key}
+                            info={this.props.images[key]}
+                            deleteImage = {this.props.deleteImage}/>
+                    )}
                 </ul>
             </div>
         )
