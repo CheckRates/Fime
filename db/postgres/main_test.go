@@ -9,22 +9,20 @@ import (
 	"github.com/checkrates/Fime/config"
 	"github.com/checkrates/Fime/fime"
 	"github.com/checkrates/Fime/util"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/require"
 )
 
 var dal *Store
 
-func init() {
-	var err error
-	dal, err = NewStore(config.New().Database.ConnString)
-	if err != nil {
-		log.Fatal("error opening connecting to db: ", err)
-	}
-}
-
 func TestMain(m *testing.M) {
-	dal.User(1)
+	conn, err := sqlx.Open("postgres", config.New().Database.ConnString)
+	if err != nil {
+		log.Fatal("TEST: Cannot connect to the database: ", err)
+	}
+
+	dal, err = NewStore(conn)
 	os.Exit(m.Run())
 }
 

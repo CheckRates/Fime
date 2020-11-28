@@ -10,13 +10,9 @@ import (
 )
 
 // NewStore returns all the data access points of Fime
-func NewStore(dataSource string) (*Store, error) {
-	// Open db and connect to it
-	db, err := sqlx.Open("postgres", dataSource)
-	if err != nil {
-		return nil, fmt.Errorf("error opening database: %w", err)
-	}
-	if err = db.Ping(); err != nil {
+func NewStore(db *sqlx.DB) (*Store, error) {
+	// Test connection
+	if err := db.Ping(); err != nil {
 		return nil, fmt.Errorf("error connecting to database: %w", err)
 	}
 
@@ -109,9 +105,9 @@ func (store *Store) MakePostTx(ctx context.Context, arg MakePostParams) (MakePos
 			}
 		}
 
+		// No errors -> proceed to return post
 		retPost.Image = newImg
 		retPost.Tags = arg.Tags
-
 		return nil
 	})
 
