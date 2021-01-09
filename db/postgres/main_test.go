@@ -7,13 +7,13 @@ import (
 	"testing"
 
 	"github.com/checkrates/Fime/config"
-	"github.com/checkrates/Fime/fime"
 	"github.com/checkrates/Fime/util"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/require"
 )
 
+// Test data access layer
 var dal *Store
 
 func TestMain(m *testing.M) {
@@ -27,20 +27,22 @@ func TestMain(m *testing.M) {
 }
 
 func TestMakePostTx(t *testing.T) {
+	var err error
 	user := createTestUser(t)
-	var tags []fime.Tag
+
+	var tagsArgs []CreateTagParams
 	for i := 0; i < 3; i++ {
-		newTag := fime.Tag{
+		arg := CreateTagParams{
 			Name: util.RandomString(4),
 		}
-		tags = append(tags, newTag)
+		tagsArgs = append(tagsArgs, arg)
 	}
 
 	postArgs := MakePostParams{
 		Name:   "IMG_2020",
 		URL:    "www.coolImage.com",
 		UserID: user.ID,
-		Tags:   tags,
+		Tags:   tagsArgs,
 	}
 
 	newPost, err := dal.MakePostTx(context.Background(), postArgs)
@@ -51,5 +53,8 @@ func TestMakePostTx(t *testing.T) {
 	require.Equal(t, newPost.Image.Name, postArgs.Name)
 	require.Equal(t, newPost.Image.URL, postArgs.URL)
 	require.Equal(t, newPost.Image.OwnerID, postArgs.UserID)
-	require.Equal(t, newPost.Tags, postArgs.Tags)
+	require.Equal(t, len(newPost.Tags), len(postArgs.Tags))
+	for i := 0; i < len(newPost.Tags); i++ {
+		require.Equal(t, newPost.Tags[i].Name, postArgs.Tags[i].Name)
+	}
 }

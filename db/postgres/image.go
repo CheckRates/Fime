@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"github.com/checkrates/Fime/fime"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -17,38 +16,59 @@ type ImageStore struct {
 	*sqlx.DB
 }
 
+// CreateImageParams provides all info to create a new image in the db
+type CreateImageParams struct {
+	Name    string `json:"name"`
+	URL     string `json:"url"`
+	OwnerID int64  `json:"userID"`
+}
+
+// ListImageParams provides all the params to list images of the db
+type ListImageParams struct {
+	Limit  int64 `json:"limit"`
+	Offset int64 `json:"offset"`
+}
+
+// UpdateImageParams provides all info to change a image's name in the db
+type UpdateImageParams struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
 // Image return image by id
-func (s *ImageStore) Image(id int64) (fime.Image, error) {
-	var i fime.Image
+func (s *ImageStore) Image(id int64) (Image, error) {
+	var i Image
 	if err := s.Get(&i, `SELECT * FROM images WHERE id=$1 LIMIT 1`, id); err != nil {
-		return fime.Image{}, err
+		return Image{}, err
 	}
 	return i, nil
 }
 
 // Images return all images
-func (s *ImageStore) Images(limit int, offset int) ([]fime.Image, error) {
-	var ii []fime.Image
-	if err := s.Select(&ii, `SELECT * FROM images ORDER BY id LIMIT $1 OFFSET $2`, limit, offset); err != nil {
-		return []fime.Image{}, err
+func (s *ImageStore) Images(args ListImageParams) ([]Image, error) {
+	var ii []Image
+	if err := s.Select(&ii, `SELECT * FROM images ORDER BY id LIMIT $1 OFFSET $2`, args.Limit, args.Offset); err != nil {
+		return []Image{}, err
 	}
 	return ii, nil
 }
 
 // CreateImage uploads a new image to the database
-func (s *ImageStore) CreateImage(i *fime.Image) error {
-	if err := s.Get(i, `INSERT INTO images (name, url, owner) VALUES ($1, $2, $3) RETURNING *`, i.Name, i.URL, i.OwnerID); err != nil {
-		return err
+func (s *ImageStore) CreateImage(args CreateImageParams) (Image, error) {
+	var i Image
+	if err := s.Get(&i, `INSERT INTO images (name, url, owner) VALUES ($1, $2, $3) RETURNING *`, args.Name, args.URL, args.OwnerID); err != nil {
+		return i, err
 	}
-	return nil
+	return i, nil
 }
 
 // UpdateImage updates an image
-func (s *ImageStore) UpdateImage(i *fime.Image) error {
-	if err := s.Get(i, `UPDATE images SET name = $1 WHERE id=$2 RETURNING *`, i.Name, i.ID); err != nil {
-		return err
+func (s *ImageStore) UpdateImage(args UpdateImageParams) (Image, error) {
+	var i Image
+	if err := s.Get(&i, `UPDATE images SET name = $1 WHERE id=$2 RETURNING *`, args.Name, args.ID); err != nil {
+		return i, err
 	}
-	return nil
+	return i, nil
 }
 
 // DeleteImage deletes an image from the database

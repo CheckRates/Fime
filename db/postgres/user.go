@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"github.com/checkrates/Fime/fime"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -17,40 +16,61 @@ type UserStore struct {
 	*sqlx.DB
 }
 
+// CreateUserParams provides all info to create a new user in the db
+type CreateUserParams struct {
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+// ListUserParams provides all the params to list users of the db
+type ListUsersParams struct {
+	Limit  int64 `json:"limit"`
+	Offset int64 `json:"offset"`
+}
+
+// UpdateUserParams provides all info to change a user's name in the db
+type UpdateUserParams struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
 // User retrieves a user from the database by id
-func (s *UserStore) User(id int64) (fime.User, error) {
-	var u fime.User
+func (s *UserStore) User(id int64) (User, error) {
+	var u User
 	if err := s.Get(&u, `SELECT * FROM users WHERE id=$1 LIMIT 1`, id); err != nil {
-		return fime.User{}, err
+		return User{}, err
 	}
 	return u, nil
 }
 
 //Users retrieve all users
-func (s *UserStore) Users(limit int, offset int) ([]fime.User, error) {
-	var uu []fime.User
-	if err := s.Select(&uu, `SELECT * FROM users ORDER BY id LIMIT $1 OFFSET $2`, limit, offset); err != nil {
-		return []fime.User{}, err
+func (s *UserStore) Users(args ListUsersParams) ([]User, error) {
+	var uu []User
+	if err := s.Select(&uu, `SELECT * FROM users ORDER BY id LIMIT $1 OFFSET $2`, args.Limit, args.Offset); err != nil {
+		return []User{}, err
 	}
 	return uu, nil
 }
 
-//CreateUser creates a user in the database
-func (s *UserStore) CreateUser(u *fime.User) error {
-	err := s.Get(u, `INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *`,
-		u.Name, u.Email, u.Password)
+// CreateUser creates a user in the database
+func (s *UserStore) CreateUser(args CreateUserParams) (User, error) {
+	var u User
+	err := s.Get(&u, `INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *`,
+		args.Name, args.Email, args.Password)
 	if err != nil {
-		return err
+		return u, err
 	}
-	return nil
+	return u, nil
 }
 
 // UpdateUser updates info about a existing user
-func (s *UserStore) UpdateUser(u *fime.User) error {
-	if err := s.Get(u, `UPDATE users SET name=$1 WHERE id=$2 RETURNING *`, u.Name, u.ID); err != nil {
-		return err
+func (s *UserStore) UpdateUser(args UpdateUserParams) (User, error) {
+	var u User
+	if err := s.Get(&u, `UPDATE users SET name=$1 WHERE id=$2 RETURNING *`, args.Name, args.ID); err != nil {
+		return u, err
 	}
-	return nil
+	return u, nil
 }
 
 // DeleteUser deletes a user from the database

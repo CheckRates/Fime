@@ -5,13 +5,21 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/checkrates/Fime/fime"
 	"github.com/jmoiron/sqlx"
 )
 
+// Store contains all the data access points to the tables of Fime
+type Store struct {
+	db *sqlx.DB
+	*UserStore
+	*ImageStore
+	*TagStore
+	*ImageTagStore
+}
+
 // NewStore returns all the data access points of Fime
 func NewStore(db *sqlx.DB) (*Store, error) {
-	// Test connection
+	// Test db connection
 	if err := db.Ping(); err != nil {
 		return nil, fmt.Errorf("error connecting to database: %w", err)
 	}
@@ -24,15 +32,6 @@ func NewStore(db *sqlx.DB) (*Store, error) {
 		TagStore:      NewTagStore(db),
 		ImageTagStore: NewImageTagStore(db),
 	}, nil
-}
-
-// Store contain all the data access points to the tables of Fime
-type Store struct {
-	db *sqlx.DB
-	fime.UserStore
-	fime.ImageStore
-	fime.TagStore
-	fime.ImageTagStore
 }
 
 func (store *Store) execTx(ctx context.Context, fn func(*Store) error) error {
@@ -59,55 +58,59 @@ func (store *Store) execTx(ctx context.Context, fn func(*Store) error) error {
 
 // MakePostParams provides all data for creating a image post in Fime
 type MakePostParams struct {
-	Name   string     `json:"name"`
-	URL    string     `json:"url"`
-	UserID int64      `json:"ownerID"`
-	Tags   []fime.Tag `json:"tags"`
+	Name   string            `json:"name"`
+	URL    string            `json:"url"`
+	UserID int64             `json:"ownerID"`
+	Tags   []CreateTagParams `json:"tags"`
 }
 
 // MakePostResult is the result of creating a post
 type MakePostResult struct {
-	Image fime.Image `json:"image"`
-	Tags  []fime.Tag `json:"tags"`
+	Image Image `json:"image"`
+	Tags  []Tag `json:"tags"`
 }
 
 // MakePostTx creates a image post in the database
-func (store *Store) MakePostTx(ctx context.Context, arg MakePostParams) (MakePostResult, error) {
+func (s *Store) MakePostTx(ctx context.Context, arg MakePostParams) (MakePostResult, error) {
 	var retPost MakePostResult
 
-	err := store.execTx(ctx, func(store *Store) error {
+	err := s.execTx(ctx, func(store *Store) error {
 		var err error
 
 		// Create Image
-		newImg := fime.Image{
+		imageArgs := CreateImageParams{
 			Name:    arg.Name,
 			URL:     arg.URL,
 			OwnerID: arg.UserID,
 		}
-		err = store.CreateImage(&newImg)
+		img, err := store.CreateImage(imageArgs)
 		if err != nil {
 			return err
 		}
 
-		// Create Tags -> Tags that already exist are returned
+		var tags []Tag
 		for i := 0; i < len(arg.Tags); i++ {
-			if err = store.CreateTag(&arg.Tags[i]); err != nil {
+			// Create Tag -> Tag that already exist are returned and not recreated
+			tag, err := s.CreateTag(arg.Tags[i])
+			if err != nil {
 				return err
 			}
 
 			// Associate tags with image
-			imgTag := fime.ImageTag{
-				ImageID: newImg.ID,
-				TagID:   arg.Tags[i].ID,
+			imgTag := ImageTag{
+				ImageID: img.ID,
+				TagID:   tag.ID,
 			}
-			if err = store.CreateImageTag(imgTag); err != nil {
+			if err = s.CreateImageTag(imgTag); err != nil {
 				return err
 			}
+
+			tags = append(tags, tag)
 		}
 
 		// No errors -> proceed to return post
-		retPost.Image = newImg
-		retPost.Tags = arg.Tags
+		retPost.Image = img
+		retPost.Tags = tags
 		return nil
 	})
 
