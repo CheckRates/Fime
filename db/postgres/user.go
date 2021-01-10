@@ -46,7 +46,7 @@ func (s *UserStore) User(id int64) (User, error) {
 
 //Users retrieve all users
 func (s *UserStore) Users(args ListUsersParams) ([]User, error) {
-	var uu []User
+	uu := []User{}
 	if err := s.Select(&uu, `SELECT * FROM users ORDER BY id LIMIT $1 OFFSET $2`, args.Limit, args.Offset); err != nil {
 		return []User{}, err
 	}
@@ -56,7 +56,7 @@ func (s *UserStore) Users(args ListUsersParams) ([]User, error) {
 // CreateUser creates a user in the database
 func (s *UserStore) CreateUser(args CreateUserParams) (User, error) {
 	var u User
-	err := s.Get(&u, `INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *`,
+	err := s.Get(u, `INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *`,
 		args.Name, args.Email, args.Password)
 	if err != nil {
 		return u, err
@@ -67,7 +67,7 @@ func (s *UserStore) CreateUser(args CreateUserParams) (User, error) {
 // UpdateUser updates info about a existing user
 func (s *UserStore) UpdateUser(args UpdateUserParams) (User, error) {
 	var u User
-	if err := s.Get(&u, `UPDATE users SET name=$1 WHERE id=$2 RETURNING *`, args.Name, args.ID); err != nil {
+	if err := s.Get(u, `UPDATE users SET name=$1 WHERE id=$2 RETURNING *`, args.Name, args.ID); err != nil {
 		return u, err
 	}
 	return u, nil

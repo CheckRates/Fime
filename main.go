@@ -10,10 +10,12 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const serverAddress = ":8000"
+// TODO: Setup in a env file
+const serverAddress = ":8080"
 
 // TODO: Using fime test database before production. Change later
 func main() {
+	// Open & connect to databse
 	conn, err := sqlx.Open("postgres", config.New().Database.ConnString)
 	if err != nil {
 		log.Fatal("Cannot connect to the database: ", err)
@@ -25,11 +27,10 @@ func main() {
 		log.Fatal("Cannot create data access store: ", err)
 	}
 
-	server := api.NewServer(store)
 	// Start Server
+	server := api.NewServer(store)
 	err = server.Start(serverAddress)
 	if err != nil {
 		log.Fatal("Cannot start server: ", err)
 	}
-
 }
