@@ -23,12 +23,6 @@ type CreateImageParams struct {
 	OwnerID int64  `json:"userID"`
 }
 
-// ListImageParams provides all the params to list images of the db
-type ListImageParams struct {
-	Limit  int64 `json:"limit"`
-	Offset int64 `json:"offset"`
-}
-
 // UpdateImageParams provides all info to change a image's name in the db
 type UpdateImageParams struct {
 	ID   int64  `json:"id"`
@@ -45,7 +39,7 @@ func (s *ImageStore) Image(id int64) (Image, error) {
 }
 
 // Images return all images
-func (s *ImageStore) Images(args ListImageParams) ([]Image, error) {
+func (s *ImageStore) Images(args ListParams) ([]Image, error) {
 	var ii []Image
 	if err := s.Select(&ii, `SELECT * FROM images ORDER BY id LIMIT $1 OFFSET $2`, args.Limit, args.Offset); err != nil {
 		return []Image{}, err

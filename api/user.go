@@ -101,7 +101,7 @@ func (server *Server) listUsers(ctx echo.Context) error {
 	}
 
 	// Request list of users to the databse
-	arg := postgres.ListUsersParams{
+	arg := postgres.ListParams{
 		Limit:  int64(req.Size),
 		Offset: int64((req.Page - 1) * req.Size),
 	}

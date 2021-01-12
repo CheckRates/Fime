@@ -23,12 +23,6 @@ type CreateUserParams struct {
 	Password string `json:"password"`
 }
 
-// ListUserParams provides all the params to list users of the db
-type ListUsersParams struct {
-	Limit  int64 `json:"limit"`
-	Offset int64 `json:"offset"`
-}
-
 // UpdateUserParams provides all info to change a user's name in the db
 type UpdateUserParams struct {
 	ID   int64  `json:"id"`
@@ -45,7 +39,7 @@ func (s *UserStore) User(id int64) (User, error) {
 }
 
 //Users retrieve all users
-func (s *UserStore) Users(args ListUsersParams) ([]User, error) {
+func (s *UserStore) Users(args ListParams) ([]User, error) {
 	uu := []User{}
 	if err := s.Select(&uu, `SELECT * FROM users ORDER BY id LIMIT $1 OFFSET $2`, args.Limit, args.Offset); err != nil {
 		return []User{}, err
@@ -56,7 +50,7 @@ func (s *UserStore) Users(args ListUsersParams) ([]User, error) {
 // CreateUser creates a user in the database
 func (s *UserStore) CreateUser(args CreateUserParams) (User, error) {
 	var u User
-	err := s.Get(u, `INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *`,
+	err := s.Get(&u, `INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *`,
 		args.Name, args.Email, args.Password)
 	if err != nil {
 		return u, err
@@ -67,7 +61,7 @@ func (s *UserStore) CreateUser(args CreateUserParams) (User, error) {
 // UpdateUser updates info about a existing user
 func (s *UserStore) UpdateUser(args UpdateUserParams) (User, error) {
 	var u User
-	if err := s.Get(u, `UPDATE users SET name=$1 WHERE id=$2 RETURNING *`, args.Name, args.ID); err != nil {
+	if err := s.Get(&u, `UPDATE users SET name=$1 WHERE id=$2 RETURNING *`, args.Name, args.ID); err != nil {
 		return u, err
 	}
 	return u, nil

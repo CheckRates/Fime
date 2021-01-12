@@ -89,3 +89,25 @@ func TestGetTagsByImage(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, imgs)
 }
+
+func TestDeleteAllImageTags(t *testing.T) {
+	var err error
+	img := createTestImage(t)
+	for i := 0; i < 3; i++ {
+		tag := createTestTag(t)
+		it := ImageTag{
+			ImageID: img.ID,
+			TagID:   tag.ID,
+		}
+
+		err = dal.CreateImageTag(it)
+	}
+
+	tags, err := dal.GetTagsByImageID(img.ID)
+	err = dal.DeleteAllImageTags(img.ID)
+	curTags, err := dal.GetTagsByImageID(img.ID)
+
+	require.NoError(t, err)
+	require.NotEmpty(t, tags)
+	require.Empty(t, curTags)
+}

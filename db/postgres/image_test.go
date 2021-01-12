@@ -78,7 +78,7 @@ func TestImageList(t *testing.T) {
 		createTestImage(t)
 	}
 
-	listArgs := ListImageParams{
+	listArgs := ListParams{
 		Limit:  5,
 		Offset: 5,
 	}

@@ -21,12 +21,6 @@ type CreateTagParams struct {
 	Name string `json:"tag"`
 }
 
-// ListUserParams provides all the params to list users of the db
-type ListTagsParams struct {
-	Limit  int64 `json:"limit"`
-	Offset int64 `json:"offset"`
-}
-
 // Tag return tag by id
 func (s *TagStore) Tag(id int64) (Tag, error) {
 	var t Tag
@@ -37,7 +31,7 @@ func (s *TagStore) Tag(id int64) (Tag, error) {
 }
 
 // Tags return all tags
-func (s *TagStore) Tags(args ListTagsParams) ([]Tag, error) {
+func (s *TagStore) Tags(args ListParams) ([]Tag, error) {
 	var tt []Tag
 	if err := s.Select(&tt, `SELECT * FROM tags ORDER BY id LIMIT $1 OFFSET $2`, args.Limit, args.Offset); err != nil {
 		return []Tag{}, err

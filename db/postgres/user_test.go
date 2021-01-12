@@ -73,7 +73,7 @@ func TestListUser(t *testing.T) {
 		createTestUser(t)
 	}
 
-	listArgs := ListUsersParams{
+	listArgs := ListParams{
 		Limit:  5,
 		Offset: 5,
 	}

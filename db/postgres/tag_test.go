@@ -71,7 +71,7 @@ func TestListTag(t *testing.T) {
 		createTestTag(t)
 	}
 
-	listArgs := ListTagsParams{
+	listArgs := ListParams{
 		Limit:  5,
 		Offset: 5,
 	}

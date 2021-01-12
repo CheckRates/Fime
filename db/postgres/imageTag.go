@@ -33,6 +33,15 @@ func (s *ImageTagStore) DeleteImageTag(it ImageTag) error {
 	return nil
 }
 
+// DeleteAllImageTags dissociate all tags from a image
+func (s *ImageTagStore) DeleteAllImageTags(imgID int64) error {
+	_, err := s.Exec(`DELETE FROM image_tags WHERE image_id = $1`, imgID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // GetTagsByImageID returns all the tags of a specific image
 func (s *ImageTagStore) GetTagsByImageID(imgID int64) ([]Tag, error) {
 	var tt []Tag
