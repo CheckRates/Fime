@@ -4,17 +4,18 @@ import (
 	"database/sql"
 	"testing"
 
-	"github.com/checkrates/Fime/fime"
 	"github.com/checkrates/Fime/util"
 	"github.com/stretchr/testify/require"
 )
 
-func createTestUser(t *testing.T) fime.User {
-	user := fime.User{
-		Name: util.RandomString(6),
+func createTestUser(t *testing.T) User {
+	newUser := CreateUserParams{
+		Name:     util.RandomString(6),
+		Email:    util.RandomString(7) + "@email.com",
+		Password: util.RandomString(8),
 	}
 
-	err := dal.CreateUser(&user)
+	user, err := dal.CreateUser(newUser)
 	require.NoError(t, err)
 	require.NotZero(t, user.ID)
 
@@ -40,15 +41,18 @@ func TestGetUser(t *testing.T) {
 func TestUpdateUser(t *testing.T) {
 	user := createTestUser(t)
 
+	updateArgs := UpdateUserParams{
+		ID:   user.ID,
+		Name: util.RandomString(6),
+	}
+
 	beforeUser := user
-	name := util.RandomString(6)
-	user.Name = name
-	err := dal.UpdateUser(&user)
+	user, err := dal.UpdateUser(updateArgs)
 
 	require.NoError(t, err)
 
 	require.Equal(t, user.ID, beforeUser.ID)
-	require.Equal(t, user.Name, name)
+	require.Equal(t, user.Name, updateArgs.Name)
 }
 
 func TestDeleteUser(t *testing.T) {
@@ -69,7 +73,12 @@ func TestListUser(t *testing.T) {
 		createTestUser(t)
 	}
 
-	users, err := dal.Users(5, 5)
+	listArgs := ListParams{
+		Limit:  5,
+		Offset: 5,
+	}
+
+	users, err := dal.Users(listArgs)
 	require.NoError(t, err)
 
 	for _, user := range users {

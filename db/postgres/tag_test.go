@@ -4,19 +4,20 @@ import (
 	"database/sql"
 	"testing"
 
-	"github.com/checkrates/Fime/fime"
 	"github.com/checkrates/Fime/util"
 	"github.com/stretchr/testify/require"
 )
 
-func createTestTag(t *testing.T) fime.Tag {
-	tag := fime.Tag{
+func createTestTag(t *testing.T) Tag {
+	args := CreateTagParams{
 		Name: util.RandomString(4),
 	}
 
-	err := dal.CreateTag(&tag)
+	tag, err := dal.CreateTag(args)
 	require.NoError(t, err)
+	require.Equal(t, args.Name, tag.Name)
 	require.NotZero(t, tag.ID)
+	require.Equal(t, tag.Name, args.Name)
 
 	return tag
 }
@@ -27,11 +28,11 @@ func TestCreateTag(t *testing.T) {
 
 func TestCreateDuplicatedTag(t *testing.T) {
 	tag1 := createTestTag(t)
-	tag2 := fime.Tag{
+	tag2Args := CreateTagParams{
 		Name: tag1.Name,
 	}
 
-	err := dal.CreateTag(&tag2)
+	tag2, err := dal.CreateTag(tag2Args)
 
 	require.NoError(t, err)
 	require.NotEmpty(t, tag2)
@@ -70,7 +71,12 @@ func TestListTag(t *testing.T) {
 		createTestTag(t)
 	}
 
-	tags, err := dal.Tags(5, 5)
+	listArgs := ListParams{
+		Limit:  5,
+		Offset: 5,
+	}
+
+	tags, err := dal.Tags(listArgs)
 	require.NoError(t, err)
 
 	for _, tag := range tags {

@@ -1,24 +1,36 @@
 package main
 
 import (
-	"fmt"
+	"log"
 
+	"github.com/checkrates/Fime/api"
 	"github.com/checkrates/Fime/config"
 	"github.com/checkrates/Fime/db/postgres"
-	"github.com/checkrates/Fime/fime"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
 
-func main() {
-	config := config.New()
-	db, _ := postgres.NewStore(config.Database.ConnString)
+// TODO: Setup in a env file
+const serverAddress = ":8080"
 
-	user := fime.User{
-		Name: "TestCool",
+// TODO: Using fime test database before production. Change later
+func main() {
+	// Open & connect to databse
+	conn, err := sqlx.Open("postgres", config.New().Database.ConnString)
+	if err != nil {
+		log.Fatal("Cannot connect to the database: ", err)
 	}
 
-	db.CreateUser(&user)
-	fmt.Println(user.ID)
-	fmt.Println(user.CreatedAt)
-	fmt.Println(user.Name)
+	// Setup Data Access Layer and server
+	store, err := postgres.NewStore(conn)
+	if err != nil {
+		log.Fatal("Cannot create data access store: ", err)
+	}
+
+	// Start Server
+	server := api.NewServer(store)
+	err = server.Start(serverAddress)
+	if err != nil {
+		log.Fatal("Cannot start server: ", err)
+	}
 }
