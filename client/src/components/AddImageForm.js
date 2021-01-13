@@ -1,31 +1,63 @@
-import React from "react";
+import React, {useState} from "react";
 
-class AddImageForm extends React.Component {
-    nameRef = React.createRef();
-    urlRef = React.createRef();
+const  AddImageForm = () => {
+    const [currentFile, setFile] = useState("");
+    const [previewImg, setPreview] = useState()
 
-    postImage = (event) => {
-        event.preventDefault();
+    const refreshImage = (e) => {
+        const image = e.target.files[0];
+        setFile(image)
+        showImagePreview(image)
+    }
 
-        // Get image data from form
-        const image = {
-            name: this.nameRef.current.value,
-            url: this.urlRef.current.value,
+    const showImagePreview = (file) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file)
+        reader.onloadend = () => {
+            setPreview(reader.result)
         }
-        // Finaly, add the image and refresh form
-        this.props.addImage(image);
-        event.currentTarget.reset();
+    }
+    
+    const submitImage = (e) => {
+        e.preventDefault();
+        if(!previewImg) return;
+        // Image request to the server
+        postImage(previewImg);
     }
 
-    render() {
-        return(
-            <form classname="post-image" onSubmit={this.postImage}>
-                <input name="name" ref={this.nameRef} type="text" placeholder="Name"/>
-                <input name="url" ref={this.urlRef} type="text" placeholder="URL"/>
-                <button type="submit">Add Image</button>
-            </form>
-        )
+    // Encode to base64 and send it to the server
+    const postImage = async (base64EncodedImage) => {
+        console.log(base64EncodedImage)
+        try {
+            await fetch("api/image", {
+                method: "POST",
+                body: JSON.stringify({data: base64EncodedImage}),
+                headers: {"Content-type": "application/json"}
+            })
+        } catch (error) {
+            console.error(error)
+        }
     }
+
+    return(
+        <div>
+        <form onSubmit={submitImage}>
+            <input 
+                type="file" 
+                name="image" 
+                onChange={refreshImage} 
+                value={currentFile}
+            />
+            <button className="btn-upload" type="submit">Upload</button>
+        </form>
+        {previewImg && (
+            <img 
+                src={previewImg} 
+                alt="" 
+                style={{height: '300px'}}/>
+        )}
+        </div>
+    )
 }
 
 export default AddImageForm;
