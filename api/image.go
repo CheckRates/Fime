@@ -14,10 +14,10 @@ type createTagParams struct {
 }
 
 type postImageParams struct {
-	Name   string                     `json:"name"`
-	URL    string                     `json:"url"`
-	UserID int64                      `json:"ownerID"`
-	Tags   []postgres.CreateTagParams `json:"tags"`
+	Name       string                     `json:"name"`
+	EncodedImg string                     `json:"image"`
+	UserID     int64                      `json:"ownerID"`
+	Tags       []postgres.CreateTagParams `json:"tags"`
 }
 
 func (server *Server) postImage(ctx echo.Context) error {
@@ -30,10 +30,16 @@ func (server *Server) postImage(ctx echo.Context) error {
 		return ctx.JSON(http.StatusOK, errorResponse(err))
 	}
 
+	// Upload image to S3 bucket and get resource URL
+	imgURL, err := server.UploadImage(req)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, errorResponse((err)))
+	}
+
 	// Make the request to the database and post image
 	arg := postgres.MakePostParams{
 		Name:   req.Name,
-		URL:    req.URL,
+		URL:    imgURL,
 		UserID: req.UserID,
 		Tags:   req.Tags,
 	}

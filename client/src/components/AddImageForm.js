@@ -6,7 +6,6 @@ const  AddImageForm = () => {
 
     const refreshImage = (e) => {
         const image = e.target.files[0];
-        setFile(image)
         showImagePreview(image)
     }
 
@@ -23,15 +22,20 @@ const  AddImageForm = () => {
         if(!previewImg) return;
         // Image request to the server
         postImage(previewImg);
-    }
+    } 
 
     // Encode to base64 and send it to the server
     const postImage = async (base64EncodedImage) => {
         console.log(base64EncodedImage)
         try {
-            await fetch("api/image", {
+            await fetch("/image", {
                 method: "POST",
-                body: JSON.stringify({data: base64EncodedImage}),
+                body: JSON.stringify({
+                    name: "test",
+                    image: base64EncodedImage,
+                    ownerID: 1,
+                    tags: [{tag: "pogs"}, {tag: "gamer"}]
+                }),
                 headers: {"Content-type": "application/json"}
             })
         } catch (error) {

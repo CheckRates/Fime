@@ -1,16 +1,18 @@
 package api
 
 import (
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/checkrates/Fime/db/postgres"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo"
 )
 
-// Single instance request validator
+// Validator struct for custom echo server validation
 type Validator struct {
 	val *validator.Validate
 }
 
+// Validate the request body struct
 func (v *Validator) Validate(i interface{}) error {
 	return v.val.Struct(i)
 }
@@ -19,6 +21,7 @@ func (v *Validator) Validate(i interface{}) error {
 type Server struct {
 	store  *postgres.Store
 	router *echo.Echo
+	aws    *session.Session
 }
 
 // NewServer returns a server for Fime
@@ -45,6 +48,10 @@ func NewServer(store *postgres.Store) *Server {
 
 // Start the Fime echo server
 func (server *Server) Start(address string) error {
+	var err error
+	if server.aws, err = connectAWS(); err != nil {
+		return err
+	}
 	return server.router.Start(address)
 }
 

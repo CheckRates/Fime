@@ -20,10 +20,19 @@ type OAuthConfig struct {
 	ClientSecret string
 }
 
+// S3Bucket contains all the configuration params for S3 connection
+type S3Bucket struct {
+	Region string
+	Bucket string
+	Secret string
+	Access string
+}
+
 // Config contains all the configuration params for Fime
 type Config struct {
 	Database DBConfig
 	OAuth    OAuthConfig
+	S3       S3Bucket
 }
 
 func init() {
@@ -42,6 +51,12 @@ func New() *Config {
 		OAuth: OAuthConfig{
 			ClientID:     getEnv("AUTH0_CLIENT_ID", ""),
 			ClientSecret: getEnv("AUTH0_CLIENT_SECRET", ""),
+		},
+		S3: S3Bucket{
+			Region: getEnv("AWS_S3_REGION", ""),
+			Access: getEnv("AWS_ACCESS_KEY", ""),
+			Secret: getEnv("AWS_SECRET", ""),
+			Bucket: getEnv("AWS_S3_BUCKET", ""),
 		},
 	}
 }

@@ -11,7 +11,7 @@ import (
 )
 
 // TODO: Setup in a env file
-const serverAddress = ":8080"
+const serverAddress = ":3001"
 
 // TODO: Using fime test database before production. Change later
 func main() {
