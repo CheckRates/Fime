@@ -83,6 +83,13 @@ type ListParams struct {
 	Offset int64 `json:"offset"`
 }
 
+// ListUserPostsParams provides all the params to list an user's posts
+type ListUserPostsParams struct {
+	UserID int64 `json:"userID"`
+	Limit  int64 `json:"limit"`
+	Offset int64 `json:"offset"`
+}
+
 // MakePostTx creates a image post from the database
 func (s *Store) MakePostTx(ctx context.Context, arg MakePostParams) (ImagePostResult, error) {
 	var retPost ImagePostResult
@@ -150,6 +157,49 @@ func (s *Store) ListPostTx(ctx context.Context, arg ListParams) ([]ImagePostResu
 		imgs, err := s.Images(arg)
 		if err != nil {
 			return err
+		}
+
+		// Get every image posts tags
+		for _, img := range imgs {
+			tags, err := s.GetTagsByImageID(img.ID)
+			if err != nil {
+				return err
+			}
+
+			post := ImagePostResult{
+				Image: img,
+				Tags:  tags,
+			}
+
+			retPost = append(retPost, post)
+		}
+
+		return nil
+	})
+
+	// Return the list of posts
+	return retPost, err
+}
+
+// ListUserPostTx gets a list of all the user's image posts from the database
+func (s *Store) ListUserPostTx(ctx context.Context, arg ListUserPostsParams) ([]ImagePostResult, error) {
+	var retPost []ImagePostResult
+
+	err := s.execTx(ctx, func(s *Store) error {
+		var err error
+
+		imgs, err := s.ImagesByUser(ListUserImagesParams{
+			UserID: arg.UserID,
+			Offset: arg.Offset,
+			Limit:  arg.Limit,
+		})
+		if err != nil {
+			return err
+		}
+
+		// No images post case
+		if len(imgs) == 0 {
+			return nil
 		}
 
 		// Get every image posts tags

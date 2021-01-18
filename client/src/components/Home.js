@@ -4,8 +4,8 @@ import Header from "./Header";
 class Home extends React.Component {
     userID = React.createRef();
 
-    goToProfile = (event) => {
-        event.preventDefault();
+    goToProfile = (e) => {
+        e.preventDefault();
         const profileID = this.userID.current.value;
         // TODO: Redirect to the Auth0 Login Page
         // Should retrieve somewhat a data of the user to identify which
@@ -16,11 +16,7 @@ class Home extends React.Component {
         // Redirect
         this.props.history.push(`/profile/${profileID}`)
     }
-
-    componentDidMount() {
-        console.log("mounted!")
-    }
- 
+    
     render() {
         return (
             <div className="home">
@@ -40,4 +36,3 @@ class Home extends React.Component {
 }
 
 export default Home;
-
