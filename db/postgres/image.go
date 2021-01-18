@@ -23,10 +23,17 @@ type CreateImageParams struct {
 	OwnerID int64  `json:"userID"`
 }
 
-// UpdateImageParams provides all info to change a image's name in the db
+// UpdateImageParams provides all info to update an image in the db
 type UpdateImageParams struct {
 	ID   int64  `json:"id"`
 	Name string `json:"name"`
+}
+
+// ListUserImagesParams provides all info to list an user's images
+type ListUserImagesParams struct {
+	UserID int64 `json:"userID"`
+	Limit  int64 `json:"limit"`
+	Offset int64 `json:"offset"`
 }
 
 // Image return image by id
@@ -38,10 +45,22 @@ func (s *ImageStore) Image(id int64) (Image, error) {
 	return i, nil
 }
 
-// Images return all images
+// Images return all images ordered by time created
 func (s *ImageStore) Images(args ListParams) ([]Image, error) {
 	var ii []Image
-	if err := s.Select(&ii, `SELECT * FROM images ORDER BY id LIMIT $1 OFFSET $2`, args.Limit, args.Offset); err != nil {
+	if err := s.Select(&ii, `SELECT * FROM images ORDER BY createdat LIMIT $1 OFFSET $2`, args.Limit, args.Offset); err != nil {
+		return []Image{}, err
+	}
+	return ii, nil
+}
+
+// ImagesByUser return all images from user ordered by time created
+func (s *ImageStore) ImagesByUser(args ListUserImagesParams) ([]Image, error) {
+	var ii []Image
+	err := s.Select(&ii, `SELECT * FROM images WHERE owner=$1 ORDER BY createdat LIMIT $2 OFFSET $3`,
+		args.UserID, args.Limit, args.Offset)
+
+	if err != nil {
 		return []Image{}, err
 	}
 	return ii, nil

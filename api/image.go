@@ -102,6 +102,11 @@ func (server *Server) deleteImage(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
 	}
 
+	// Delete image in the S3 repo
+	if err = server.DeleteImage(req.ID); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	}
+
 	err = server.store.DeletePostTx(ctx.Request().Context(), req.ID)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
@@ -176,6 +181,57 @@ func (server *Server) listImage(ctx echo.Context) error {
 	}
 
 	imgs, err := server.store.ListPostTx(ctx.Request().Context(), arg)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	}
+
+	return ctx.JSON(http.StatusOK, imgs)
+}
+
+type listUserPostsParams struct {
+	UserID int64 `validate:"required,min=1"`
+	Page   int   `validate:"required,min=1"`
+	Size   int   `validate:"required,min=1,max=10"`
+}
+
+func (server *Server) listUserImages(ctx echo.Context) error {
+	userID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, errorResponse(
+			fmt.Errorf("Invalid ID value")))
+	}
+
+	page, err := strconv.Atoi(ctx.QueryParam("page"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, errorResponse(
+			fmt.Errorf("Invalid page value")))
+	}
+
+	size, err := strconv.Atoi(ctx.QueryParam("size"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, errorResponse(
+			fmt.Errorf("Invalid size value")))
+	}
+
+	// Validate list request params
+	req := listUserPostsParams{
+		UserID: userID,
+		Page:   page,
+		Size:   size,
+	}
+
+	if err = ctx.Validate(&req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
+	}
+
+	// Request list of user's image posts to the database
+	arg := postgres.ListUserPostsParams{
+		UserID: userID,
+		Limit:  int64(req.Size),
+		Offset: int64((req.Page - 1) * req.Size),
+	}
+
+	imgs, err := server.store.ListUserPostTx(ctx.Request().Context(), arg)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}

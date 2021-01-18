@@ -37,10 +37,12 @@ func NewServer(store *postgres.Store) *Server {
 	router.POST("/image", server.postImage)
 	router.GET("/image/:id", server.getImage)
 	router.DELETE("/image/:id", server.deleteImage)
-	router.PATCH("image", server.updateImage)
-	router.GET("images", server.listImage)
+	router.PATCH("/image", server.updateImage)
+	router.GET("/images", server.listImage)
+	router.GET("/images/:id", server.listUserImages)
 
 	router.GET("/tags", server.listTags)
+	router.GET("/tags/:id", server.listUserTags)
 
 	server.router = router
 	return server
