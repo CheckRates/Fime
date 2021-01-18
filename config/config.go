@@ -33,6 +33,7 @@ type Config struct {
 	Database DBConfig
 	OAuth    OAuthConfig
 	S3       S3Bucket
+	Address  string
 }
 
 func init() {

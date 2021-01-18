@@ -10,13 +10,11 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// TODO: Setup in a env file
-const serverAddress = ":3001"
-
-// TODO: Using fime test database before production. Change later
 func main() {
+	config := config.New()
+
 	// Open & connect to databse
-	conn, err := sqlx.Open("postgres", config.New().Database.ConnString)
+	conn, err := sqlx.Open("postgres", config.Database.ConnString)
 	if err != nil {
 		log.Fatal("Cannot connect to the database: ", err)
 	}
@@ -29,7 +27,7 @@ func main() {
 
 	// Start Server
 	server := api.NewServer(store)
-	err = server.Start(serverAddress)
+	err = server.Start(config.Address)
 	if err != nil {
 		log.Fatal("Cannot start server: ", err)
 	}
