@@ -1,12 +1,29 @@
 import React, {useState} from "react";
 
-const  AddImageForm = () => {
+import {Button, Image, Form} from "react-bootstrap";
+import "bootstrap/dist/css/bootstrap.min.css"
+
+
+const  AddImageForm = (props) => {
     const [currentFile, setFile] = useState("");
     const [previewImg, setPreview] = useState()
+    const [currentName, setImageName] = useState("");
+    const [currentTags, setTags] = useState();
 
     const refreshImage = (e) => {
         const image = e.target.files[0];
         showImagePreview(image)
+    }
+
+    const handleName = (e) => {
+        const name = e.target.value;
+        setImageName(name)
+    }
+
+    const handleTags = (e) => {
+        const tagString = e.target.value;
+        const tags = tagString.split(/(\s+)/).filter((e) => { return e.trim().length > 0; });
+        setTags(tags);
     }
 
     const showImagePreview = (file) => {
@@ -20,21 +37,31 @@ const  AddImageForm = () => {
     const submitImage = (e) => {
         e.preventDefault();
         if(!previewImg) return;
+        if(!currentName) return;
+
+        var imgTags = [];
+        for (var i = 0; i < currentTags.length; i++) {
+            imgTags[i] = {
+                tag: currentTags[i]
+            }
+        }
+
         // Image request to the server
-        postImage(previewImg);
+        postImage(previewImg, imgTags);
+        setPreview()
+        props.refreshImages();
     } 
 
     // Encode to base64 and send it to the server
-    const postImage = async (base64EncodedImage) => {
-        console.log(base64EncodedImage)
+    const postImage = async (base64EncodedImage, imgTags) => { 
         try {
             await fetch("/image", {
                 method: "POST",
                 body: JSON.stringify({
-                    name: "test",
+                    name: currentName,
                     image: base64EncodedImage,
                     ownerID: 1,
-                    tags: [{tag: "pogs"}, {tag: "gamer"}]
+                    tags: imgTags
                 }),
                 headers: {"Content-type": "application/json"}
             })
@@ -45,21 +72,43 @@ const  AddImageForm = () => {
 
     return(
         <div>
-        <form onSubmit={submitImage}>
-            <input 
+        <Form onSubmit={submitImage}>
+            <Form.Label>Post Image</Form.Label>
+            
+            <Form.Control 
                 type="file" 
                 name="image" 
                 onChange={refreshImage} 
                 value={currentFile}
             />
-            <button className="btn-upload" type="submit">Upload</button>
-        </form>
-        {previewImg && (
-            <img 
+   
+            <Form.Control  
+                className="mt-2"
+                type="text" 
+                name="image" 
+                placeholder="Image Name"
+                onChange={handleName} 
+                value={currentName}
+            />
+
+            <Form.Control  
+                className="mt-2"
+                type="text" 
+                name="tags" 
+                placeholder="Tags (Separated by spaces)"
+                onChange={handleTags}
+            />
+
+            {previewImg && (
+            <Image className="mt-2"
                 src={previewImg} 
                 alt="" 
                 style={{height: '300px'}}/>
-        )}
+            )}
+            <div className="mt-2">
+                <Button className="mt-2" type="submit">Upload</Button>
+            </div>
+        </Form>
         </div>
     )
 }

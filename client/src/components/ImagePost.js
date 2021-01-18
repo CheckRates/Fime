@@ -1,17 +1,40 @@
 import React from 'react';
+import Tag from "./Tag";
 
-class ImagePost extends React.Component {
-    render() {
-        const { url, name } = this.props.info;
-        return (
-            <li className="single-image">
-                <img src={url}  alt={name}></img>
-                <h3 className="imageName">{name}</h3>
-                <button onClick={() => this.props.deleteImage(this.props.index)}>Delete Image</button>
-                {/*DEBUG: GET THE DATA FROM API <h3 className="imageDate">{this.image.date}</h3>*/}
-            </li>
-        )
+import {Container, Row, Col, Card, Button} from "react-bootstrap";
+import "bootstrap/dist/css/bootstrap.min.css"
+
+
+const ImagePost = (props) =>  {
+    const { image, tags } = props.info;
+
+    const handleDelete = (e) => {
+        props.deleteImage(image.CreatedAt)
     }
+
+
+    return (
+        <Col>
+            <Card className="h-100 shadow-sm bg-white rounded">
+                <Card.Img variant="top" className="mb-3" src={image.URL}  alt={image.Name}/>
+                <Card.Body className="d-flex flex-column">
+                    <div className="d-flex mb-2 justify-content-between">
+                    <Card.Title>{image.Name}</Card.Title>
+                </div>
+                <Card.Text className="text-secondary">{image.CreatedAt}</Card.Text>
+                <Card.Text><b>Tags:</b></Card.Text>
+                <Container bg="dark" variant="dark">                
+                    <Row>
+                        {Object.keys(tags).map(key => 
+                            <Tag tag={tags[key]} />
+                        )}
+                    </Row>
+                </Container>
+                <Button className="p-2" variant="danger" onClick={() => handleDelete()}>Delete</Button>
+            </Card.Body>    
+        </Card>
+        </Col>
+    )
 }
 
 export default ImagePost;
