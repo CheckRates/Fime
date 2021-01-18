@@ -59,6 +59,7 @@ func New() *Config {
 			Secret: getEnv("AWS_SECRET", ""),
 			Bucket: getEnv("AWS_S3_BUCKET", ""),
 		},
+		Address: getEnv("PORT", ""),
 	}
 }
 
