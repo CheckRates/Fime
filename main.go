@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/checkrates/Fime/api"
 	"github.com/checkrates/Fime/config"
@@ -25,9 +26,15 @@ func main() {
 		log.Fatal("Cannot create data access store: ", err)
 	}
 
+	// Quick fix for Heroku Port
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3001"
+	}
+
 	// Start Server
 	server := api.NewServer(store)
-	err = server.Start(config.Address)
+	err = server.Start(port)
 	if err != nil {
 		log.Fatal("Cannot start server: ", err)
 	}
