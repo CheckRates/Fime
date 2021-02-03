@@ -34,7 +34,7 @@ func main() {
 
 	// Start Server
 	server := api.NewServer(store)
-	err = server.Start(port)
+	err = server.Start("127.0.0.1:" + port)
 	if err != nil {
 		log.Fatal("Cannot start server: ", err)
 	}
