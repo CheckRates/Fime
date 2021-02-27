@@ -26,6 +26,19 @@ func TestCreateUser(t *testing.T) {
 	createTestUser(t)
 }
 
+func TestGetUserByEmail(t *testing.T) {
+
+	user := createTestUser(t)
+	user2, err := dal.UserByEmail(user.Email)
+
+	require.NoError(t, err)
+	require.NotEmpty(t, user2)
+
+	require.Equal(t, user.ID, user2.ID)
+	require.Equal(t, user.Name, user2.Name)
+	require.Equal(t, user.Email, user2.Email)
+}
+
 func TestGetUser(t *testing.T) {
 
 	user := createTestUser(t)

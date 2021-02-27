@@ -5,19 +5,19 @@ import (
 )
 
 // NewImageTagStore returns the access point to ImageTags of Fime
-func NewImageTagStore(db *sqlx.DB) *ImageTagStore {
-	return &ImageTagStore{
+func NewImageTagStore(db *sqlx.DB) *ImageTagSQL {
+	return &ImageTagSQL{
 		DB: db,
 	}
 }
 
-// ImageTagStore is the database access point to ImageTags
-type ImageTagStore struct {
+// ImageTagSQL is the database access point to ImageTags
+type ImageTagSQL struct {
 	*sqlx.DB
 }
 
 // CreateImageTag creates a new associative entity between an image and tag
-func (s *ImageTagStore) CreateImageTag(it ImageTag) error {
+func (s *ImageTagSQL) CreateImageTag(it ImageTag) error {
 	if _, err := s.Exec(`INSERT INTO image_tags VALUES ($1, $2)`, it.ImageID, it.TagID); err != nil {
 		return err
 	}
@@ -25,7 +25,7 @@ func (s *ImageTagStore) CreateImageTag(it ImageTag) error {
 }
 
 // DeleteImageTag dissociate an image from a tag
-func (s *ImageTagStore) DeleteImageTag(it ImageTag) error {
+func (s *ImageTagSQL) DeleteImageTag(it ImageTag) error {
 	_, err := s.Exec(`DELETE FROM image_tags WHERE image_id = $1 AND tag_id = $2`, it.ImageID, it.TagID)
 	if err != nil {
 		return err
@@ -34,7 +34,7 @@ func (s *ImageTagStore) DeleteImageTag(it ImageTag) error {
 }
 
 // DeleteAllImageTags dissociate all tags from a image
-func (s *ImageTagStore) DeleteAllImageTags(imgID int64) error {
+func (s *ImageTagSQL) DeleteAllImageTags(imgID int64) error {
 	_, err := s.Exec(`DELETE FROM image_tags WHERE image_id = $1`, imgID)
 	if err != nil {
 		return err
@@ -43,7 +43,7 @@ func (s *ImageTagStore) DeleteAllImageTags(imgID int64) error {
 }
 
 // GetTagsByImageID returns all the tags of a specific image
-func (s *ImageTagStore) GetTagsByImageID(imgID int64) ([]Tag, error) {
+func (s *ImageTagSQL) GetTagsByImageID(imgID int64) ([]Tag, error) {
 	var tt []Tag
 	statement :=
 		`SELECT t.* FROM tags t 
@@ -58,7 +58,7 @@ func (s *ImageTagStore) GetTagsByImageID(imgID int64) ([]Tag, error) {
 }
 
 // GetImagesByTagID returns all the tags of a specific image
-func (s *ImageTagStore) GetImagesByTagID(tagID int64) ([]Image, error) {
+func (s *ImageTagSQL) GetImagesByTagID(tagID int64) ([]Image, error) {
 	var ii []Image
 	statement :=
 		`SELECT i.* FROM images i 
