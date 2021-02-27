@@ -1,3 +1,4 @@
 ALTER TABLE users 
     DROP COLUMN email,
-    DROP COLUMN password;
+    DROP COLUMN hashedPassword,
+    DROP COLUMN passwordChangedAt;
