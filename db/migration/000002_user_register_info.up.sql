@@ -1,3 +1,3 @@
-ALTER TABLE users ADD COLUMN email varchar NOT NULL;
-ALTER TABLE users ADD COLUMN password varchar NOT NULL;
-ALTER TABLE users ADD CONSTRAINT minPasswordLen CHECK (length(password) >= 8);
+ALTER TABLE users ADD COLUMN email varchar UNIQUE NOT NULL;
+ALTER TABLE users ADD COLUMN hashedPassword varchar NOT NULL;
+ALTER TABLE users ADD COLUMN passwordChangedAt timestamptz NOT NULL DEFAULT '0001-01-01 00:00:00Z';

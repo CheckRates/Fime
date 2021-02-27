@@ -113,3 +113,52 @@ func (server *Server) listUsers(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusOK, user)
 }
+
+// TODO: Change to hashpassword
+type loginUserParams struct {
+	Email    string
+	Password string
+}
+
+// getUser takes the desired user's ID from the URL and returns a JSON object of requested user
+func (server *Server) loginUser(ctx echo.Context) error {
+	var req *loginUserParams
+	if err := ctx.Bind(&req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
+	}
+
+	if err := ctx.Validate(req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
+	}
+
+	// FIXME: If valid, get user
+	if req.Email != "Jon" || req.Password != "secret" {
+		return ctx.JSON(http.StatusUnauthorized, errorResponse(fmt.Errorf("Incorrect Password")))
+	}
+
+	u, err := server.store.UserByEmail(req.Email)
+	if err != nil {
+		// TODO: Better error messages/handling
+		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	}
+
+	// TODO: Check if hashed_password matches stored one in the database
+	//if u.HashedPassword != "password" {
+	//	return ctx.JSON(http.StatusBadRequest, errorResponse(fmt.Errorf("Incorrect password")))
+	//}
+
+	// Generates Access and Refresh Tokens
+
+}
+
+func (server *Server) getAccessToken(ctx echo.Context) {
+	// FIXME: Get the user from the context
+	user := postgres.User{}
+	accessToken, err := server.CreateAccessToken(&user)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	}
+
+	// FIXME: AccessToken should be a JSON object
+	ctx.JSON(http.StatusOK, accessToken)
+}
