@@ -15,7 +15,7 @@ import (
 )
 
 // Test data access layer
-var dal *Store
+var dal Store
 
 func TestMain(m *testing.M) {
 	conn, err := sqlx.Open("postgres", config.New().Database.ConnString)

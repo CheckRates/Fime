@@ -6,11 +6,12 @@ go 1.14
 require (
 	github.com/aws/aws-sdk-go v1.36.28
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8
 	github.com/go-playground/validator/v10 v10.4.1
 	github.com/go-sql-driver/mysql v1.5.0 // indirect
-	github.com/golang-migrate/migrate/v4 v4.14.1 // indirect
 	github.com/golang/mock v1.4.4
+	github.com/google/uuid v1.2.0
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/joho/godotenv v1.3.0
 	github.com/kr/text v0.2.0 // indirect

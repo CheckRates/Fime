@@ -27,7 +27,7 @@ func (server *Server) postImage(ctx echo.Context) error {
 	}
 
 	if err := ctx.Validate(req); err != nil {
-		return ctx.JSON(http.StatusOK, errorResponse(err))
+		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
 	}
 
 	// Upload image to S3 bucket and get resource URL
