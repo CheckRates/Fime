@@ -9,15 +9,24 @@ import (
 )
 
 func createTestUser(t *testing.T) User {
-	newUser := CreateUserParams{
-		Name:     util.RandomString(6),
-		Email:    util.RandomString(7) + "@email.com",
-		Password: util.RandomString(8),
+	hashedPassword, err := util.HashPassword(util.RandomString(8))
+	require.NoError(t, err)
+
+	arg := CreateUserParams{
+		Name:           util.RandomString(6),
+		Email:          util.RandomString(7) + "@email.com",
+		HashedPassword: hashedPassword,
 	}
 
-	user, err := dal.CreateUser(newUser)
+	user, err := dal.CreateUser(arg)
 	require.NoError(t, err)
-	require.NotZero(t, user.ID)
+	require.NotZero(t, user)
+
+	require.Equal(t, arg.Name, user.Name)
+	require.Equal(t, arg.Email, user.Email)
+	require.Equal(t, arg.HashedPassword, user.HashedPassword)
+	require.True(t, user.PasswordChangedAt.IsZero())
+	require.NotZero(t, user.CreatedAt)
 
 	return user
 }
