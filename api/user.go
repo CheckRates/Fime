@@ -4,15 +4,25 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/checkrates/Fime/db/postgres"
+	"github.com/checkrates/Fime/util"
 	"github.com/labstack/echo"
+	"github.com/lib/pq"
 )
 
 type createUserRequest struct {
-	Name     string `json:"name" validate:"required"`
+	Name     string `json:"name" validate:"required,alphanum"`
 	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
+	Password string `json:"password" validate:"required,min=8"`
+}
+
+type createUserResponse struct {
+	ID        int64     `json:"id"`
+	Name      string    `json:"username"`
+	Email     string    `json:"email"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 // createUser takes a JSON request and returns the newly created User object
@@ -26,19 +36,36 @@ func (server *Server) createUser(ctx echo.Context) error {
 		return ctx.JSON(http.StatusOK, errorResponse(err))
 	}
 
-	// Make the request to the database and create user
-	userArgs := postgres.CreateUserParams{
-		Name:     req.Name,
-		Email:    req.Email,
-		Password: req.Password,
-	}
-
-	user, err := server.store.CreateUser(userArgs)
+	hashedPassword, err := util.HashPassword(req.Password)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 
-	return ctx.JSON(http.StatusOK, user)
+	// Make the request to the database and create user
+	userArgs := postgres.CreateUserParams{
+		Name:           req.Name,
+		Email:          req.Email,
+		HashedPassword: hashedPassword,
+	}
+
+	user, err := server.store.CreateUser(userArgs)
+	if err != nil {
+		// Possible Database errors
+		if pqErr, ok := err.(*pq.Error); ok {
+			switch pqErr.Code.Name() {
+			case "unique_violation":
+				return ctx.JSON(http.StatusForbidden, errorResponse(err))
+			}
+		}
+	}
+
+	resp := createUserResponse{
+		ID:        user.ID,
+		Name:      user.Name,
+		Email:     user.Email,
+		CreatedAt: user.CreatedAt,
+	}
+	return ctx.JSON(http.StatusOK, resp)
 }
 
 type getUserParams struct {
@@ -120,6 +147,7 @@ type loginUserParams struct {
 	Password string
 }
 
+/*
 // getUser takes the desired user's ID from the URL and returns a JSON object of requested user
 func (server *Server) loginUser(ctx echo.Context) error {
 	var req *loginUserParams
@@ -162,3 +190,4 @@ func (server *Server) getAccessToken(ctx echo.Context) {
 	// FIXME: AccessToken should be a JSON object
 	ctx.JSON(http.StatusOK, accessToken)
 }
+*/

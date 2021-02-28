@@ -18,9 +18,9 @@ type UserSQL struct {
 
 // CreateUserParams provides all info to create a new user in the db
 type CreateUserParams struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Name           string `json:"name"`
+	Email          string `json:"email"`
+	HashedPassword string `json:"hashedPassword"`
 }
 
 // UpdateUserParams provides all info to change a user's name in the db
@@ -60,7 +60,7 @@ func (s *UserSQL) Users(args ListParams) ([]User, error) {
 func (s *UserSQL) CreateUser(args CreateUserParams) (User, error) {
 	var u User
 	err := s.Get(&u, `INSERT INTO users (name, email, hashedPassword) VALUES ($1, $2, $3) RETURNING *`,
-		args.Name, args.Email, args.Password)
+		args.Name, args.Email, args.HashedPassword)
 	if err != nil {
 		return u, err
 	}

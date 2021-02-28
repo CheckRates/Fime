@@ -417,6 +417,21 @@ func (mr *MockStoreMockRecorder) User(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "User", reflect.TypeOf((*MockStore)(nil).User), arg0)
 }
 
+// UserByEmail mocks base method
+func (m *MockStore) UserByEmail(arg0 string) (postgres.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserByEmail", arg0)
+	ret0, _ := ret[0].(postgres.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserByEmail indicates an expected call of UserByEmail
+func (mr *MockStoreMockRecorder) UserByEmail(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserByEmail", reflect.TypeOf((*MockStore)(nil).UserByEmail), arg0)
+}
+
 // Users mocks base method
 func (m *MockStore) Users(arg0 postgres.ListParams) ([]postgres.User, error) {
 	m.ctrl.T.Helper()
