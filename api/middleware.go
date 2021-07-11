@@ -8,7 +8,7 @@ import (
 	"github.com/labstack/echo"
 )
 
-// MiddlewareValidateRefreshToken
+// MiddlewareValidateRefreshToken takes a refresh token and checks if it is a valid token
 func (server *Server) MiddlewareValidateRefreshToken(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		token, err := extractToken(ctx.Request().Header)
@@ -43,11 +43,11 @@ func (server *Server) MiddlewareValidateRefreshToken(next echo.HandlerFunc) echo
 
 			ctx.Set("user", user)
 		*/
-		next(ctx)
+		return next(ctx)
 	}
 }
 
-// MiddlewareValidateAccessToken
+// MiddlewareValidateAccessToken checks if a access token and checks if it is valid token
 func (server *Server) MiddlewareValidateAccessToken(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		token, err := extractToken(ctx.Request().Header)

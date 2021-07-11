@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/checkrates/Fime/config"
 	"github.com/checkrates/Fime/db/postgres"
 	"github.com/checkrates/Fime/token"
 	"github.com/go-playground/validator/v10"
@@ -21,20 +22,24 @@ func (v *Validator) Validate(i interface{}) error {
 // Server handles all HTTP requests and manages Database calls for Fime
 type Server struct {
 	store  postgres.Store
+	config config.Config
 	router *echo.Echo
 	aws    *session.Session
 	token  token.Maker
 }
 
 // NewServer returns a server for Fime
-func NewServer(store postgres.Store) *Server {
+func NewServer(store postgres.Store) (*Server, error) {
 	server := &Server{store: store}
+	token, err := token.NewJWTMaker("secret") // FIXME: Cannot be secret for reasons
+	if err != nil {
+		return nil, err
+	}
 	router := echo.New()
 	router.Validator = &Validator{val: validator.New()}
 
-	// server.tokenMaker = token.NewJWTMaker("secret") // FIXME: Cannot be secret for obvious reasons
 	//router.Group("/image").Use(middleware.)
-
+	router.POST("/user/login", server.loginUser)
 	router.POST("/user", server.createUser)
 	router.GET("/user/:id", server.getUser)
 	router.GET("/user", server.listUsers)
@@ -50,7 +55,8 @@ func NewServer(store postgres.Store) *Server {
 	router.GET("/tag/:id", server.listUserTags)
 
 	server.router = router
-	return server
+	server.token = token
+	return server, nil
 }
 
 // Start the Fime echo server

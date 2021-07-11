@@ -23,10 +23,22 @@ func NewJWTMaker(secretKey string) (Maker, error) {
 	return &JWTMaker{secretKey}, nil
 }
 
-// CreateToken takes an userID and an expiration duration to create a new token
-func (maker *JWTMaker) CreateToken(payType PayloadType, userID int64, duration time.Duration) (string, error) {
+// CreateAccess takes an userID and an expiration duration to create a new token
+func (maker *JWTMaker) CreateAccess(userID int64, duration time.Duration) (string, error) {
 
-	payload, err := NewPayload(payType, userID, duration)
+	payload, err := NewAccessPayload(userID, duration)
+	if err != nil {
+		return "", err
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, payload)
+	return token.SignedString([]byte(maker.secretKey))
+}
+
+// CreateRefresh takes an userID and an expiration duration to create a new token
+func (maker *JWTMaker) CreateRefresh(userID int64, duration time.Duration) (string, error) {
+
+	payload, err := NewRefreshPayload(userID, duration)
 	if err != nil {
 		return "", err
 	}
