@@ -5,6 +5,7 @@ package config
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -14,10 +15,14 @@ type DBConfig struct {
 	ConnString string
 }
 
-// OAuthConfig provides all info for Google OAuth
-type OAuthConfig struct {
-	ClientID     string
-	ClientSecret string
+// JWT provides all info for token signing
+type JWT struct {
+	AccessSecret      string
+	RefreshSecret     string
+	RefreshPublicKey  string
+	AccessPublicKey   string
+	AccessExpiration  time.Duration
+	RefreshExpiration time.Duration
 }
 
 // S3Bucket contains all the configuration params for S3 connection
@@ -31,7 +36,7 @@ type S3Bucket struct {
 // Config contains all the configuration params for Fime
 type Config struct {
 	Database DBConfig
-	OAuth    OAuthConfig
+	Token    JWT
 	S3       S3Bucket
 	Address  string
 }
@@ -49,9 +54,12 @@ func New() *Config {
 		Database: DBConfig{
 			ConnString: getEnv("DATABASE_URL", ""),
 		},
-		OAuth: OAuthConfig{
-			ClientID:     getEnv("AUTH0_CLIENT_ID", ""),
-			ClientSecret: getEnv("AUTH0_CLIENT_SECRET", ""),
+		Token: JWT{
+			AccessSecret:      getEnv("ACCESS_TOKEN_SECRET", ""),
+			RefreshSecret:     getEnv("REFRESH_TOKEN_SECRET", ""),
+			RefreshPublicKey:  getEnv("REFRESH_TOKEN_PUBLIC_PATH", ""),
+			AccessExpiration:  5 * time.Minute,
+			RefreshExpiration: 3 * time.Hour,
 		},
 		S3: S3Bucket{
 			Region: getEnv("AWS_S3_REGION", ""),

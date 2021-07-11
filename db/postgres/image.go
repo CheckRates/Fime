@@ -5,14 +5,14 @@ import (
 )
 
 // NewImageStore returns the access point to all the images of Fime
-func NewImageStore(db *sqlx.DB) *ImageStore {
-	return &ImageStore{
+func NewImageStore(db *sqlx.DB) *ImageSQL {
+	return &ImageSQL{
 		DB: db,
 	}
 }
 
-// ImageStore is the database access point to the images
-type ImageStore struct {
+// ImageSQL is the database access point to the images
+type ImageSQL struct {
 	*sqlx.DB
 }
 
@@ -37,7 +37,7 @@ type ListUserImagesParams struct {
 }
 
 // Image return image by id
-func (s *ImageStore) Image(id int64) (Image, error) {
+func (s *ImageSQL) Image(id int64) (Image, error) {
 	var i Image
 	if err := s.Get(&i, `SELECT * FROM images WHERE id=$1 LIMIT 1`, id); err != nil {
 		return Image{}, err
@@ -46,7 +46,7 @@ func (s *ImageStore) Image(id int64) (Image, error) {
 }
 
 // Images return all images ordered by time created
-func (s *ImageStore) Images(args ListParams) ([]Image, error) {
+func (s *ImageSQL) Images(args ListParams) ([]Image, error) {
 	var ii []Image
 	if err := s.Select(&ii, `SELECT * FROM images ORDER BY createdat LIMIT $1 OFFSET $2`, args.Limit, args.Offset); err != nil {
 		return []Image{}, err
@@ -55,7 +55,7 @@ func (s *ImageStore) Images(args ListParams) ([]Image, error) {
 }
 
 // ImagesByUser return all images from user ordered by time created
-func (s *ImageStore) ImagesByUser(args ListUserImagesParams) ([]Image, error) {
+func (s *ImageSQL) ImagesByUser(args ListUserImagesParams) ([]Image, error) {
 	var ii []Image
 	err := s.Select(&ii, `SELECT * FROM images WHERE owner=$1 ORDER BY createdat LIMIT $2 OFFSET $3`,
 		args.UserID, args.Limit, args.Offset)
@@ -67,7 +67,7 @@ func (s *ImageStore) ImagesByUser(args ListUserImagesParams) ([]Image, error) {
 }
 
 // CreateImage uploads a new image to the database
-func (s *ImageStore) CreateImage(args CreateImageParams) (Image, error) {
+func (s *ImageSQL) CreateImage(args CreateImageParams) (Image, error) {
 	var i Image
 	if err := s.Get(&i, `INSERT INTO images (name, url, owner) VALUES ($1, $2, $3) RETURNING *`, args.Name, args.URL, args.OwnerID); err != nil {
 		return i, err
@@ -76,7 +76,7 @@ func (s *ImageStore) CreateImage(args CreateImageParams) (Image, error) {
 }
 
 // UpdateImage updates an image
-func (s *ImageStore) UpdateImage(args UpdateImageParams) (Image, error) {
+func (s *ImageSQL) UpdateImage(args UpdateImageParams) (Image, error) {
 	var i Image
 	if err := s.Get(&i, `UPDATE images SET name = $1 WHERE id=$2 RETURNING *`, args.Name, args.ID); err != nil {
 		return i, err
@@ -85,7 +85,7 @@ func (s *ImageStore) UpdateImage(args UpdateImageParams) (Image, error) {
 }
 
 // DeleteImage deletes an image from the database
-func (s *ImageStore) DeleteImage(id int64) error {
+func (s *ImageSQL) DeleteImage(id int64) error {
 	if _, err := s.Exec(`DELETE FROM images WHERE id = $1`, id); err != nil {
 		return err
 	}

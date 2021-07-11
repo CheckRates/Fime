@@ -24,3 +24,8 @@ func RandomString(n int) string {
 
 	return sb.String()
 }
+
+// RandomNumber generates a int64 random number between 0 and max
+func RandomNumber(max int64) int64 {
+	return rand.Int63n(max)
+}

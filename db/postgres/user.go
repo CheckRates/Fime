@@ -5,22 +5,22 @@ import (
 )
 
 // NewUserStore returns the access point to all the users of Fime
-func NewUserStore(db *sqlx.DB) *UserStore {
-	return &UserStore{
+func NewUserStore(db *sqlx.DB) *UserSQL {
+	return &UserSQL{
 		DB: db,
 	}
 }
 
-// UserStore is the database access point to users
-type UserStore struct {
+// UserSQL is the database access point to users
+type UserSQL struct {
 	*sqlx.DB
 }
 
 // CreateUserParams provides all info to create a new user in the db
 type CreateUserParams struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Name           string `json:"name"`
+	Email          string `json:"email"`
+	HashedPassword string `json:"hashedPassword"`
 }
 
 // UpdateUserParams provides all info to change a user's name in the db
@@ -30,7 +30,7 @@ type UpdateUserParams struct {
 }
 
 // User retrieves a user from the database by id
-func (s *UserStore) User(id int64) (User, error) {
+func (s *UserSQL) User(id int64) (User, error) {
 	var u User
 	if err := s.Get(&u, `SELECT * FROM users WHERE id=$1 LIMIT 1`, id); err != nil {
 		return User{}, err
@@ -38,8 +38,17 @@ func (s *UserStore) User(id int64) (User, error) {
 	return u, nil
 }
 
+// UserByEmail retrieves a user from the database by email
+func (s *UserSQL) UserByEmail(email string) (User, error) {
+	var u User
+	if err := s.Get(&u, `SELECT * FROM users WHERE email=$1 LIMIT 1`, email); err != nil {
+		return User{}, err
+	}
+	return u, nil
+}
+
 //Users retrieve all users
-func (s *UserStore) Users(args ListParams) ([]User, error) {
+func (s *UserSQL) Users(args ListParams) ([]User, error) {
 	uu := []User{}
 	if err := s.Select(&uu, `SELECT * FROM users ORDER BY id LIMIT $1 OFFSET $2`, args.Limit, args.Offset); err != nil {
 		return []User{}, err
@@ -48,10 +57,10 @@ func (s *UserStore) Users(args ListParams) ([]User, error) {
 }
 
 // CreateUser creates a user in the database
-func (s *UserStore) CreateUser(args CreateUserParams) (User, error) {
+func (s *UserSQL) CreateUser(args CreateUserParams) (User, error) {
 	var u User
-	err := s.Get(&u, `INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *`,
-		args.Name, args.Email, args.Password)
+	err := s.Get(&u, `INSERT INTO users (name, email, hashedPassword) VALUES ($1, $2, $3) RETURNING *`,
+		args.Name, args.Email, args.HashedPassword)
 	if err != nil {
 		return u, err
 	}
@@ -59,7 +68,7 @@ func (s *UserStore) CreateUser(args CreateUserParams) (User, error) {
 }
 
 // UpdateUser updates info about a existing user
-func (s *UserStore) UpdateUser(args UpdateUserParams) (User, error) {
+func (s *UserSQL) UpdateUser(args UpdateUserParams) (User, error) {
 	var u User
 	if err := s.Get(&u, `UPDATE users SET name=$1 WHERE id=$2 RETURNING *`, args.Name, args.ID); err != nil {
 		return u, err
@@ -68,7 +77,7 @@ func (s *UserStore) UpdateUser(args UpdateUserParams) (User, error) {
 }
 
 // DeleteUser deletes a user from the database
-func (s *UserStore) DeleteUser(id int64) error {
+func (s *UserSQL) DeleteUser(id int64) error {
 	if _, err := s.Exec(`DELETE FROM users WHERE id = $1`, id); err != nil {
 		return err
 	}
