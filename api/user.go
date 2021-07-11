@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/checkrates/Fime/config"
 	"github.com/checkrates/Fime/db/postgres"
 	"github.com/checkrates/Fime/util"
 	"github.com/labstack/echo"
@@ -141,14 +142,18 @@ func (server *Server) listUsers(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, user)
 }
 
-// TODO: Change to hashpassword
 type loginUserParams struct {
-	Email    string
-	Password string
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8"`
 }
 
-/*
-// getUser takes the desired user's ID from the URL and returns a JSON object of requested user
+type loginUserResponse struct {
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+}
+
+// loginUser takes an user email and password and returns a access and refresh token,
+// if the user is valid
 func (server *Server) loginUser(ctx echo.Context) error {
 	var req *loginUserParams
 	if err := ctx.Bind(&req); err != nil {
@@ -159,30 +164,44 @@ func (server *Server) loginUser(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
 	}
 
-	// FIXME: If valid, get user
-	if req.Email != "Jon" || req.Password != "secret" {
-		return ctx.JSON(http.StatusUnauthorized, errorResponse(fmt.Errorf("Incorrect Password")))
+	// Get user from db and check if credentials match
+	user, err := server.store.UserByEmail(req.Email)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	}
+	err = util.ValidatePassword(req.Password, user.HashedPassword)
+	if err != nil {
+		return ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 	}
 
-	u, err := server.store.UserByEmail(req.Email)
+	// User successfully logd Generates Access and Refresh Tokens
+	accessToken, err := server.token.CreateAccess(
+		user.ID,
+		config.New().Token.AccessExpiration,
+	)
 	if err != nil {
-		// TODO: Better error messages/handling
 		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 
-	// TODO: Check if hashed_password matches stored one in the database
-	//if u.HashedPassword != "password" {
-	//	return ctx.JSON(http.StatusBadRequest, errorResponse(fmt.Errorf("Incorrect password")))
-	//}
+	refreshToken, err := server.token.CreateRefresh(
+		user.ID,
+		config.New().Token.RefreshExpiration,
+	)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	}
 
-	// Generates Access and Refresh Tokens
-
+	return ctx.JSON(http.StatusOK, &loginUserResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	})
 }
 
+/*
 func (server *Server) getAccessToken(ctx echo.Context) {
 	// FIXME: Get the user from the context
 	user := postgres.User{}
-	accessToken, err := server.CreateAccessToken(&user)
+	accessToken, err := server.token.CreateToken(token.Access, user.ID, config.New().Token.AccessExpiration)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}

@@ -5,6 +5,7 @@ package config
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -16,11 +17,12 @@ type DBConfig struct {
 
 // JWT provides all info for token signing
 type JWT struct {
-	AccessSecret     string
-	RefreshSecret    string
-	RefreshPublicKey string
-	AccessPublicKey  string
-	Expiration       int64
+	AccessSecret      string
+	RefreshSecret     string
+	RefreshPublicKey  string
+	AccessPublicKey   string
+	AccessExpiration  time.Duration
+	RefreshExpiration time.Duration
 }
 
 // S3Bucket contains all the configuration params for S3 connection
@@ -53,10 +55,11 @@ func New() *Config {
 			ConnString: getEnv("DATABASE_URL", ""),
 		},
 		Token: JWT{
-			AccessSecret:     getEnv("ACCESS_TOKEN_SECRET", ""),
-			RefreshSecret:    getEnv("REFRESH_TOKEN_SECRET", ""),
-			RefreshPublicKey: getEnv("REFRESH_TOKEN_PUBLIC_PATH", ""),
-			Expiration:       5,
+			AccessSecret:      getEnv("ACCESS_TOKEN_SECRET", ""),
+			RefreshSecret:     getEnv("REFRESH_TOKEN_SECRET", ""),
+			RefreshPublicKey:  getEnv("REFRESH_TOKEN_PUBLIC_PATH", ""),
+			AccessExpiration:  5 * time.Minute,
+			RefreshExpiration: 3 * time.Hour,
 		},
 		S3: S3Bucket{
 			Region: getEnv("AWS_S3_REGION", ""),
