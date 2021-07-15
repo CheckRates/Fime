@@ -29,7 +29,7 @@ func TestGetImagePostAPI(t *testing.T) {
 		Return(imgPost, nil)
 
 	// Start test server
-	server := NewServer(store)
+	server, err := NewServer(store)
 	recorder := httptest.NewRecorder()
 
 	// Make request to the test server
