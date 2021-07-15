@@ -174,7 +174,7 @@ func (server *Server) loginUser(ctx echo.Context) error {
 		return ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 	}
 
-	// User successfully logd Generates Access and Refresh Tokens
+	// User successfully login -- Generates Access and Refresh Tokens
 	accessToken, err := server.token.CreateAccess(
 		user.ID,
 		config.New().Token.AccessExpiration,
