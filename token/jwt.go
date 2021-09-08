@@ -8,7 +8,8 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-const minSecretSize = 32
+// TODO: Change to 32 later
+const minSecretSize = 3
 
 // JWTMaker is a a JWT constructor
 type JWTMaker struct {
