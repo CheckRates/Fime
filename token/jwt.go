@@ -31,7 +31,7 @@ func (maker *JWTMaker) CreateAccess(userID int64, duration time.Duration) (strin
 		return "", err
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, payload)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
 	return token.SignedString([]byte(maker.secretKey))
 }
 
@@ -50,15 +50,11 @@ func (maker *JWTMaker) CreateRefresh(userID int64, duration time.Duration) (stri
 func (maker *JWTMaker) VerifyToken(token string) (*Payload, error) {
 	// keyFunc checks if the received token has the expected signing method
 	keyFunc := func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, ErrInvalidToken
 		}
 
-		verifyKey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(maker.secretKey))
-		if err != nil {
-			return nil, err
-		}
-		return verifyKey, nil
+		return []byte(maker.secretKey), nil
 	}
 
 	jwtToken, err := jwt.ParseWithClaims(token, &Payload{}, keyFunc)
@@ -71,7 +67,6 @@ func (maker *JWTMaker) VerifyToken(token string) (*Payload, error) {
 		return nil, ErrInvalidToken
 	}
 
-	// Finally, cast into a payload object and returned it
 	payload, ok := jwtToken.Claims.(*Payload)
 	if !ok {
 		return nil, ErrInvalidToken
