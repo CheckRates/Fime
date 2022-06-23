@@ -18,9 +18,6 @@ type DBConfig struct {
 // JWT provides all info for token signing
 type JWT struct {
 	AccessSecret      string
-	RefreshSecret     string
-	RefreshPublicKey  string
-	AccessPublicKey   string
 	AccessExpiration  time.Duration
 	RefreshExpiration time.Duration
 }
@@ -42,23 +39,20 @@ type Config struct {
 }
 
 func init() {
-	// loads values from .env into the system
 	if err := godotenv.Load(); err != nil {
 		log.Print("No .env file found")
 	}
 }
 
 // New -> Constructor for Config
-func New() *Config {
-	return &Config{
+func New() Config {
+	return Config{
 		Database: DBConfig{
 			ConnString: getEnv("DATABASE_URL", ""),
 		},
 		Token: JWT{
-			AccessSecret:      getEnv("ACCESS_TOKEN_SECRET", ""),
-			RefreshSecret:     getEnv("REFRESH_TOKEN_SECRET", ""),
-			RefreshPublicKey:  getEnv("REFRESH_TOKEN_PUBLIC_PATH", ""),
-			AccessExpiration:  5 * time.Minute,
+			AccessSecret:      getEnv("TOKEN_SYMMETRIC_KEY", ""),
+			AccessExpiration:  15 * time.Minute,
 			RefreshExpiration: 3 * time.Hour,
 		},
 		S3: S3Bucket{

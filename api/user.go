@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -18,11 +19,20 @@ type createUserRequest struct {
 	Password string `json:"password" validate:"required,min=8"`
 }
 
-type createUserResponse struct {
+type userResponse struct {
 	ID        int64     `json:"id"`
 	Name      string    `json:"username"`
 	Email     string    `json:"email"`
 	CreatedAt time.Time `json:"createdAt"`
+}
+
+func newUserResponse(dbUser postgres.User) userResponse {
+	return userResponse{
+		ID:        dbUser.ID,
+		Name:      dbUser.Name,
+		Email:     dbUser.Email,
+		CreatedAt: dbUser.CreatedAt,
+	}
 }
 
 // createUser takes a JSON request and returns the newly created User object
@@ -59,12 +69,7 @@ func (server *Server) createUser(ctx echo.Context) error {
 		}
 	}
 
-	resp := createUserResponse{
-		ID:        user.ID,
-		Name:      user.Name,
-		Email:     user.Email,
-		CreatedAt: user.CreatedAt,
-	}
+	resp := newUserResponse(user)
 	return ctx.JSON(http.StatusCreated, resp)
 }
 
@@ -139,4 +144,45 @@ func (server *Server) listUsers(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, user)
+}
+
+type loginUserRequest struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8"`
+}
+
+type loginUserResponse struct {
+	AccessToken string       `json:"access_token"`
+	User        userResponse `json:"user"`
+}
+
+func (server *Server) loginUser(ctx echo.Context) error {
+	var req *loginUserRequest
+	if err := ctx.Bind(&req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
+	}
+
+	user, err := server.store.UserByEmail(req.Email)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return ctx.JSON(http.StatusNotFound, errorResponse(err))
+		}
+		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	}
+
+	err = util.ValidatePassword(req.Password, user.HashedPassword)
+	if err != nil {
+		return ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+	}
+
+	accessToken, err := server.token.CreateAccess(user.ID, server.config.Token.AccessExpiration)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	}
+
+	resp := loginUserResponse{
+		AccessToken: accessToken,
+		User:        newUserResponse(user),
+	}
+	return ctx.JSON(http.StatusOK, resp)
 }

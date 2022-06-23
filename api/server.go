@@ -29,16 +29,26 @@ type Server struct {
 }
 
 // NewServer returns a server for Fime
-func NewServer(store postgres.Store) (*Server, error) {
-	server := &Server{store: store}
-	token, err := token.NewJWTMaker("secret") // FIXME: Cannot be secret for reasons
+func NewServer(config config.Config, store postgres.Store) (*Server, error) {
+	token, err := token.NewJWTMaker(config.Token.AccessSecret) // FIXME: Cannot be secret for reasons
 	if err != nil {
 		return nil, err
 	}
+
+	server := &Server{
+		store:  store,
+		token:  token,
+		config: config,
+	}
+
+	server.setupRouter()
+	return server, nil
+}
+
+func (server *Server) setupRouter() {
 	router := echo.New()
 	router.Validator = &Validator{val: validator.New()}
 
-	//router.Group("/image").Use(middleware.)
 	router.POST("/user/login", server.loginUser)
 	router.POST("/user", server.createUser)
 	router.GET("/user/:id", server.getUser)
@@ -55,8 +65,6 @@ func NewServer(store postgres.Store) (*Server, error) {
 	router.GET("/tag/:id", server.listUserTags)
 
 	server.router = router
-	server.token = token
-	return server, nil
 }
 
 // Start the Fime echo server
