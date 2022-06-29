@@ -31,10 +31,11 @@ func (server *Server) postImage(ctx echo.Context) error {
 	}
 
 	// Upload image to S3 bucket and get resource URL
-	imgURL, err := server.UploadImage(req)
-	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errorResponse((err)))
-	}
+	//imgURL, err := server.UploadImage(req)
+	//if err != nil {
+	//	return ctx.JSON(http.StatusInternalServerError, errorResponse((err)))
+	//}
+	imgURL := "www.coolimage.com" // FIXME: Connect to AWS S3 bucket
 
 	// Make the request to the database and post image
 	arg := postgres.MakePostParams{
@@ -102,10 +103,11 @@ func (server *Server) deleteImage(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
 	}
 
+	// FIXME:
 	// Delete image in the S3 repo
-	if err = server.DeleteImage(req.ID); err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-	}
+	//if err = server.DeleteImage(req.ID); err != nil {
+	//	return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	//}
 
 	err = server.store.DeletePostTx(ctx.Request().Context(), req.ID)
 	if err != nil {

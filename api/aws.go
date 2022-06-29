@@ -1,30 +1,18 @@
 package api
 
 import (
-	"bufio"
-	"bytes"
-	"encoding/base64"
-	"fmt"
-	"io/ioutil"
-	"os"
-	"strings"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/checkrates/Fime/config"
-	"github.com/globalsign/mgo/bson"
 )
 
 const maxImageSize = 1000000000
 
-func connectAWS() (*session.Session, error) {
-	config := config.New()
+func connectAWS(config config.S3Bucket) (*session.Session, error) {
 	s, err := session.NewSession(&aws.Config{
-		Region:      aws.String(config.S3.Region),
-		Credentials: credentials.NewStaticCredentials(config.S3.Access, config.S3.Secret, ""),
+		Region:      aws.String(config.Region),
+		Credentials: credentials.NewStaticCredentials(config.Access, config.Secret, ""),
 	})
 
 	if err != nil {
@@ -33,6 +21,8 @@ func connectAWS() (*session.Session, error) {
 
 	return s, nil
 }
+
+/* TODO: Full rework
 
 // UploadImage takes the base64 image content from a image post request
 // and uploads to a S3 Bucket
@@ -119,3 +109,4 @@ func (server *Server) DeleteImage(id int64) error {
 
 	return nil
 }
+*/
