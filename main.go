@@ -12,10 +12,13 @@ import (
 )
 
 func main() {
-	config := config.New()
+	config, err := config.Load(".")
+	if err != nil {
+		log.Fatal("Cannot read config: ", err)
+	}
 
 	// Open & connect to databse
-	conn, err := sqlx.Open("postgres", config.Database.ConnString)
+	conn, err := sqlx.Open("postgres", config.ConnString)
 	if err != nil {
 		log.Fatal("Cannot connect to the database: ", err)
 	}
