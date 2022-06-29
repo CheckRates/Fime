@@ -51,18 +51,21 @@ func (server *Server) setupRouter() {
 
 	router.POST("/user/login", server.loginUser)
 	router.POST("/user", server.createUser)
-	router.GET("/user/:id", server.getUser)
-	router.GET("/user", server.listUsers)
 
-	router.POST("/image", server.postImage)
-	router.GET("/image/:id", server.getImage)
-	router.DELETE("/image/:id", server.deleteImage)
-	router.PATCH("/image", server.updateImage)
-	router.GET("/image", server.listImage)
-	router.GET("/image/user/:id", server.listUserImages)
+	authRoutes := router.Group("/", authMiddleware(server.token))
 
-	router.GET("/tag", server.listTags)
-	router.GET("/tag/:id", server.listUserTags)
+	authRoutes.GET("/user/:id", server.getUser)
+	authRoutes.GET("/user", server.listUsers)
+
+	authRoutes.POST("/image", server.postImage)
+	authRoutes.GET("/image/:id", server.getImage)
+	authRoutes.DELETE("/image/:id", server.deleteImage)
+	authRoutes.PATCH("/image", server.updateImage)
+	authRoutes.GET("/image", server.listImage)
+	authRoutes.GET("/image/user/:id", server.listUserImages)
+
+	authRoutes.GET("/tag", server.listTags)
+	authRoutes.GET("/tag/:id", server.listUserTags)
 
 	server.router = router
 }

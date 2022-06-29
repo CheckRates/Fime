@@ -5,74 +5,47 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/checkrates/Fime/token"
 	"github.com/labstack/echo"
 )
 
-// MiddlewareValidateRefreshToken takes a refresh token and checks if it is a valid token
-func (server *Server) MiddlewareValidateRefreshToken(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(ctx echo.Context) error {
-		token, err := extractToken(ctx.Request().Header)
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, errorResponse(errors.New("error")))
-			return nil
-		}
+const (
+	authHeaderKey  = "authorization"
+	authTypeBearer = "bearer"
+	authPayloadKey = "auth_payload"
+)
 
-		_, err = server.token.VerifyToken(token)
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, errorResponse(err))
-			return nil
-		}
+func authMiddleware(tokenMaker token.Maker) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(ctx echo.Context) error {
+			authHeader := ctx.Request().Header.Get(authHeaderKey)
+			if len(authHeader) == 0 {
+				err := errors.New("authorization header is not provided")
+				return ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+			}
 
-		/*
-			//Custom Key Validation
+			fields := strings.Fields(authHeader)
+			if len(fields) < 2 {
+				err := errors.New("invalid authorization header format")
+				return ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+			}
 
-			user, err := server.store.User(payload.UserID)
+			// Handle auth based on type retrieved from header (May implement OAuth later)
+			authType := fields[0]
+			if authType != authTypeBearer {
+				err := errors.New("provided authorization type not supported by the server")
+				return ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+			}
+
+			accessToken := fields[1]
+			payload, err := tokenMaker.VerifyToken(accessToken)
 			if err != nil {
-				ctx.JSON(http.StatusBadRequest, errorResponse(err))
-				return nil
+				return ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 			}
 
-			actualCustomKey := uh.authService.GenerateCustomKey(user.ID, user.TokenHash)
-			if customKey != actualCustomKey {
-				ctx.JSON(http.StatusBadRequest, errorResponse(err))
-				return nil
-			}
+			ctx.Set(authPayloadKey, payload)
 
-			ctx := context.WithValue(r.Context(), UserKey{}, *user)
-			r = r.WithContext(ctx)
-
-			ctx.Set("user", user)
-		*/
-		return next(ctx)
-	}
-}
-
-// MiddlewareValidateAccessToken checks if a access token and checks if it is valid token
-func (server *Server) MiddlewareValidateAccessToken(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(ctx echo.Context) error {
-		token, err := extractToken(ctx.Request().Header)
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, errorResponse(errors.New("error")))
-			return nil
+			return next(ctx)
 		}
-
-		payload, err := server.token.VerifyToken(token)
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, errorResponse(err))
-			return nil
-		}
-
-		ctx.Set("userID", payload.UserID)
-		return next(ctx)
 	}
-}
-
-// extractToken returns the token from the HTTP header if it exist
-func extractToken(header http.Header) (string, error) {
-	authHeader := header.Get("Authorization")
-	authHeaderContent := strings.Split(authHeader, " ")
-	if len(authHeaderContent) != 2 {
-		return "", errors.New("Token not provided or malformed")
-	}
-	return authHeaderContent[1], nil
 }
