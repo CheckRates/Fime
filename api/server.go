@@ -30,7 +30,7 @@ type Server struct {
 
 // NewServer returns a server for Fime
 func NewServer(config config.Config, store postgres.Store) (*Server, error) {
-	token, err := token.NewJWTMaker(config.Token.AccessSecret) // FIXME: Cannot be secret for reasons
+	token, err := token.NewJWTMaker(config.Token.AccessSecret)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func (server *Server) setupRouter() {
 // Start the Fime echo server
 func (server *Server) Start(address string) error {
 	var err error
-	if server.aws, err = connectAWS(); err != nil {
+	if server.aws, err = connectAWS(server.config.S3); err != nil {
 		return err
 	}
 	return server.router.Start(address)
