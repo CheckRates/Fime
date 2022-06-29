@@ -7,7 +7,7 @@ import (
 	"github.com/checkrates/Fime/config"
 )
 
-const maxImageSize = 1000000000
+//const maxImageSize = 1000000000
 
 func connectAWS(config config.S3Bucket) (*session.Session, error) {
 	s, err := session.NewSession(&aws.Config{

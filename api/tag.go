@@ -14,13 +14,13 @@ func (server *Server) listTags(ctx echo.Context) error {
 	page, err := strconv.Atoi(ctx.QueryParam("page"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("Invalid page value")))
+			fmt.Errorf("invalid page value")))
 	}
 
 	size, err := strconv.Atoi(ctx.QueryParam("size"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("Invalid size value")))
+			fmt.Errorf("invalid size value")))
 	}
 
 	// Validate list request params
@@ -59,19 +59,19 @@ func (server *Server) listUserTags(ctx echo.Context) error {
 	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("Invalid ID")))
+			fmt.Errorf("invalid ID")))
 	}
 
 	page, err := strconv.Atoi(ctx.QueryParam("page"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("Invalid page value")))
+			fmt.Errorf("invalid page value")))
 	}
 
 	size, err := strconv.Atoi(ctx.QueryParam("size"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("Invalid size value")))
+			fmt.Errorf("invalid size value")))
 	}
 
 	// Validate list request params

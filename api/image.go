@@ -9,10 +9,6 @@ import (
 	"github.com/labstack/echo"
 )
 
-type createTagParams struct {
-	Tag string
-}
-
 type postImageParams struct {
 	Name       string                     `json:"name"`
 	EncodedImg string                     `json:"image"`
@@ -62,7 +58,7 @@ func (server *Server) getImage(ctx echo.Context) error {
 	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("Invalid ID")))
+			fmt.Errorf("invalid ID")))
 	}
 
 	// Validate the get request params
@@ -91,7 +87,7 @@ func (server *Server) deleteImage(ctx echo.Context) error {
 	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("Invalid ID")))
+			fmt.Errorf("invalid ID")))
 	}
 
 	// Validate the delete request params
@@ -157,13 +153,13 @@ func (server *Server) listImage(ctx echo.Context) error {
 	page, err := strconv.Atoi(ctx.QueryParam("page"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("Invalid page value")))
+			fmt.Errorf("invalid page value")))
 	}
 
 	size, err := strconv.Atoi(ctx.QueryParam("size"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("Invalid size value")))
+			fmt.Errorf("invalid size value")))
 	}
 
 	// Validate list request params
@@ -200,19 +196,19 @@ func (server *Server) listUserImages(ctx echo.Context) error {
 	userID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("Invalid ID value")))
+			fmt.Errorf("invalid ID value")))
 	}
 
 	page, err := strconv.Atoi(ctx.QueryParam("page"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("Invalid page value")))
+			fmt.Errorf("invalid page value")))
 	}
 
 	size, err := strconv.Atoi(ctx.QueryParam("size"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("Invalid size value")))
+			fmt.Errorf("invalid size value")))
 	}
 
 	// Validate list request params
