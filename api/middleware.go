@@ -31,7 +31,7 @@ func authMiddleware(tokenMaker token.Maker) echo.MiddlewareFunc {
 			}
 
 			// Handle auth based on type retrieved from header (May implement OAuth later)
-			authType := fields[0]
+			authType := strings.ToLower(fields[0])
 			if authType != authTypeBearer {
 				err := errors.New("provided authorization type not supported by the server")
 				return ctx.JSON(http.StatusUnauthorized, errorResponse(err))

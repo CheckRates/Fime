@@ -2,22 +2,18 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/checkrates/Fime/db/postgres"
+	"github.com/checkrates/Fime/token"
 	"github.com/checkrates/Fime/util"
 	"github.com/labstack/echo"
 	"github.com/lib/pq"
 )
-
-type createUserRequest struct {
-	Name     string `json:"name" validate:"required,alphanum"`
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=8"`
-}
 
 type userResponse struct {
 	ID        int64     `json:"id"`
@@ -33,6 +29,12 @@ func newUserResponse(dbUser postgres.User) userResponse {
 		Email:     dbUser.Email,
 		CreatedAt: dbUser.CreatedAt,
 	}
+}
+
+type createUserRequest struct {
+	Name     string `json:"name" validate:"required,alphanum"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8"`
 }
 
 // createUser takes a JSON request and returns the newly created User object
@@ -73,79 +75,6 @@ func (server *Server) createUser(ctx echo.Context) error {
 	return ctx.JSON(http.StatusCreated, resp)
 }
 
-type getUserParams struct {
-	ID int64 `validate:"required,gte=1"`
-}
-
-// getUser takes the desired user's ID from the URL and returns a JSON object of requested user
-func (server *Server) getUser(ctx echo.Context) error {
-	// Parse URL params
-	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
-	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("invalid ID")))
-	}
-
-	// Validate the get request params
-	req := getUserParams{
-		ID: id,
-	}
-
-	if err = ctx.Validate(&req); err != nil {
-		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
-	}
-
-	user, err := server.store.User(req.ID)
-	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-	}
-
-	return ctx.JSON(http.StatusOK, user)
-}
-
-type listUserParams struct {
-	Page int `validate:"required,min=1"`
-	Size int `validate:"required,min=1,max=10"`
-}
-
-// listUserParams takes limit and offset params and returns the JSON user objects
-func (server *Server) listUsers(ctx echo.Context) error {
-	page, err := strconv.Atoi(ctx.QueryParam("page"))
-	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("invalid page value")))
-	}
-
-	size, err := strconv.Atoi(ctx.QueryParam("size"))
-	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("invalid size value")))
-	}
-
-	// Validate list request params
-	req := listUserParams{
-		Page: page,
-		Size: size,
-	}
-
-	if err = ctx.Validate(&req); err != nil {
-		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
-	}
-
-	// Request list of users to the databse
-	arg := postgres.ListParams{
-		Limit:  int64(req.Size),
-		Offset: int64((req.Page - 1) * req.Size),
-	}
-
-	user, err := server.store.Users(arg)
-	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-	}
-
-	return ctx.JSON(http.StatusOK, user)
-}
-
 type loginUserRequest struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,min=8"`
@@ -184,5 +113,98 @@ func (server *Server) loginUser(ctx echo.Context) error {
 		AccessToken: accessToken,
 		User:        newUserResponse(user),
 	}
+	return ctx.JSON(http.StatusOK, resp)
+}
+
+type getUserParams struct {
+	ID int64 `validate:"required,gte=1"`
+}
+
+// getUser takes the desired user's ID from the URL and returns a JSON object of requested user
+func (server *Server) getUser(ctx echo.Context) error {
+	// Parse URL params
+	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, errorResponse(
+			fmt.Errorf("invalid ID")))
+	}
+
+	fmt.Println("Reach the API endpoint")
+
+	// Validate the get request params
+	req := getUserParams{
+		ID: id,
+	}
+
+	authPayload := ctx.Get(authPayloadKey).(*token.Payload)
+	if authPayload == nil {
+		err := errors.New("cannot retrived user if not authenticated")
+		return ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+	}
+
+	if err = ctx.Validate(&req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
+	}
+
+	user, err := server.store.User(req.ID)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	}
+
+	resp := newUserResponse(user)
+	return ctx.JSON(http.StatusOK, resp)
+}
+
+type listUserParams struct {
+	Page int `validate:"required,min=1"`
+	Size int `validate:"required,min=1,max=10"`
+}
+
+// listUserParams takes limit and offset params and returns the JSON user objects
+func (server *Server) listUsers(ctx echo.Context) error {
+	page, err := strconv.Atoi(ctx.QueryParam("page"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, errorResponse(
+			fmt.Errorf("invalid page value")))
+	}
+
+	size, err := strconv.Atoi(ctx.QueryParam("size"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, errorResponse(
+			fmt.Errorf("invalid size value")))
+	}
+
+	// Validate list request params
+	req := listUserParams{
+		Page: page,
+		Size: size,
+	}
+
+	if err = ctx.Validate(&req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
+	}
+
+	// Request list of users to the databse
+	arg := postgres.ListParams{
+		Limit:  int64(req.Size),
+		Offset: int64((req.Page - 1) * req.Size),
+	}
+
+	authPayload := ctx.Get(authPayloadKey).(*token.Payload)
+	if authPayload == nil {
+		err := errors.New("cannot retrived users if not authenticated")
+		return ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+	}
+
+	users, err := server.store.Users(arg)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	}
+
+	var resp []userResponse
+	for _, u := range users {
+		resp = append(resp, newUserResponse(u))
+	}
+
 	return ctx.JSON(http.StatusOK, resp)
 }

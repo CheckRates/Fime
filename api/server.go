@@ -7,6 +7,7 @@ import (
 	"github.com/checkrates/Fime/token"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 )
 
 // Validator struct for custom echo server validation
@@ -47,12 +48,13 @@ func NewServer(config config.Config, store postgres.Store) (*Server, error) {
 
 func (server *Server) setupRouter() {
 	router := echo.New()
+	router.Use(middleware.RemoveTrailingSlash())
 	router.Validator = &Validator{val: validator.New()}
 
 	router.POST("/user/login", server.loginUser)
 	router.POST("/user", server.createUser)
 
-	authRoutes := router.Group("/", authMiddleware(server.token))
+	authRoutes := router.Group("/*", authMiddleware(server.token))
 
 	authRoutes.GET("/user/:id", server.getUser)
 	authRoutes.GET("/user", server.listUsers)
