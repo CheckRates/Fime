@@ -5,27 +5,20 @@ package config
 import (
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/joho/godotenv"
 )
 
-// DBConfig provides all credentials information about the db connection
-type DBConfig struct {
-	ConnString string
-}
-
 // JWT provides all info for token signing
 type JWT struct {
 	AccessSecret      string
-	RefreshSecret     string
-	RefreshPublicKey  string
-	AccessPublicKey   string
 	AccessExpiration  time.Duration
 	RefreshExpiration time.Duration
 }
 
-// S3Bucket contains all the configuration params for S3 connection
+// S3Bucket contains all the configuration params for AWS S3 connection
 type S3Bucket struct {
 	Region string
 	Bucket string
@@ -35,30 +28,25 @@ type S3Bucket struct {
 
 // Config contains all the configuration params for Fime
 type Config struct {
-	Database DBConfig
-	Token    JWT
-	S3       S3Bucket
-	Address  string
+	Address    string
+	ConnString string
+	Token      JWT
+	S3         S3Bucket
 }
 
-func init() {
-	// loads values from .env into the system
-	if err := godotenv.Load(); err != nil {
+func Load(path string) (Config, error) {
+	envPath := filepath.Join(path, ".env")
+
+	if err := godotenv.Load(envPath); err != nil {
 		log.Print("No .env file found")
 	}
-}
 
-// New -> Constructor for Config
-func New() *Config {
-	return &Config{
-		Database: DBConfig{
-			ConnString: getEnv("DATABASE_URL", ""),
-		},
+	return Config{
+		Address:    getEnv("PORT", ""),
+		ConnString: getEnv("DATABASE_URL", ""),
 		Token: JWT{
-			AccessSecret:      getEnv("ACCESS_TOKEN_SECRET", ""),
-			RefreshSecret:     getEnv("REFRESH_TOKEN_SECRET", ""),
-			RefreshPublicKey:  getEnv("REFRESH_TOKEN_PUBLIC_PATH", ""),
-			AccessExpiration:  5 * time.Minute,
+			AccessSecret:      getEnv("TOKEN_SYMMETRIC_KEY", ""),
+			AccessExpiration:  15 * time.Minute,
 			RefreshExpiration: 3 * time.Hour,
 		},
 		S3: S3Bucket{
@@ -67,8 +55,7 @@ func New() *Config {
 			Secret: getEnv("AWS_SECRET", ""),
 			Bucket: getEnv("AWS_S3_BUCKET", ""),
 		},
-		Address: getEnv("PORT", ""),
-	}
+	}, nil
 }
 
 // Simple helper function to read an environment or return a default value

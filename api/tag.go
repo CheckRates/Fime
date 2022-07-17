@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/checkrates/Fime/db/postgres"
+	"github.com/checkrates/Fime/token"
 	"github.com/labstack/echo"
 )
 
@@ -14,13 +15,13 @@ func (server *Server) listTags(ctx echo.Context) error {
 	page, err := strconv.Atoi(ctx.QueryParam("page"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("Invalid page value")))
+			fmt.Errorf("invalid page value")))
 	}
 
 	size, err := strconv.Atoi(ctx.QueryParam("size"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("Invalid size value")))
+			fmt.Errorf("invalid size value")))
 	}
 
 	// Validate list request params
@@ -31,6 +32,12 @@ func (server *Server) listTags(ctx echo.Context) error {
 
 	if err = ctx.Validate(&req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
+	}
+
+	authPayload := ctx.Get(authPayloadKey).(*token.Payload)
+	if authPayload == nil {
+		return ctx.JSON(http.StatusUnauthorized, errorResponse(
+			fmt.Errorf("cannot access tags without being logged in")))
 	}
 
 	// Request list of tags to the databse
@@ -59,19 +66,19 @@ func (server *Server) listUserTags(ctx echo.Context) error {
 	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("Invalid ID")))
+			fmt.Errorf("invalid ID")))
 	}
 
 	page, err := strconv.Atoi(ctx.QueryParam("page"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("Invalid page value")))
+			fmt.Errorf("invalid page value")))
 	}
 
 	size, err := strconv.Atoi(ctx.QueryParam("size"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("Invalid size value")))
+			fmt.Errorf("invalid size value")))
 	}
 
 	// Validate list request params
@@ -90,6 +97,12 @@ func (server *Server) listUserTags(ctx echo.Context) error {
 		ID:     req.ID,
 		Limit:  req.Size,
 		Offset: (req.Page - 1) * req.Size,
+	}
+
+	authPayload := ctx.Get(authPayloadKey).(*token.Payload)
+	if arg.ID != authPayload.UserID {
+		return ctx.JSON(http.StatusUnauthorized, errorResponse(
+			fmt.Errorf("cannot access user tags without being logged in")))
 	}
 
 	tags, err := server.store.GetUserTags(arg)

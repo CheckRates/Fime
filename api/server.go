@@ -7,6 +7,7 @@ import (
 	"github.com/checkrates/Fime/token"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 )
 
 // Validator struct for custom echo server validation
@@ -29,40 +30,52 @@ type Server struct {
 }
 
 // NewServer returns a server for Fime
-func NewServer(store postgres.Store) (*Server, error) {
-	server := &Server{store: store}
-	token, err := token.NewJWTMaker("secret") // FIXME: Cannot be secret for reasons
+func NewServer(config config.Config, store postgres.Store) (*Server, error) {
+	token, err := token.NewJWTMaker(config.Token.AccessSecret)
 	if err != nil {
 		return nil, err
 	}
+
+	server := &Server{
+		store:  store,
+		token:  token,
+		config: config,
+	}
+
+	server.setupRouter()
+	return server, nil
+}
+
+func (server *Server) setupRouter() {
 	router := echo.New()
+	router.Use(middleware.RemoveTrailingSlash())
 	router.Validator = &Validator{val: validator.New()}
 
-	//router.Group("/image").Use(middleware.)
 	router.POST("/user/login", server.loginUser)
 	router.POST("/user", server.createUser)
-	router.GET("/user/:id", server.getUser)
-	router.GET("/user", server.listUsers)
 
-	router.POST("/image", server.postImage)
-	router.GET("/image/:id", server.getImage)
-	router.DELETE("/image/:id", server.deleteImage)
-	router.PATCH("/image", server.updateImage)
-	router.GET("/image", server.listImage)
-	router.GET("/image/user/:id", server.listUserImages)
+	authRoutes := router.Group("/*", authMiddleware(server.token))
 
-	router.GET("/tag", server.listTags)
-	router.GET("/tag/:id", server.listUserTags)
+	authRoutes.GET("/user/:id", server.getUser)
+	authRoutes.GET("/user", server.listUsers)
+
+	authRoutes.POST("/image", server.postImage)
+	authRoutes.GET("/image/:id", server.getImage)
+	authRoutes.DELETE("/image/:id", server.deleteImage)
+	authRoutes.PATCH("/image", server.updateImage)
+	authRoutes.GET("/image", server.listImage)
+	authRoutes.GET("/image/user/:id", server.listUserImages)
+
+	authRoutes.GET("/tag", server.listTags)
+	authRoutes.GET("/tag/:id", server.listUserTags)
 
 	server.router = router
-	server.token = token
-	return server, nil
 }
 
 // Start the Fime echo server
 func (server *Server) Start(address string) error {
 	var err error
-	if server.aws, err = connectAWS(); err != nil {
+	if server.aws, err = connectAWS(server.config.S3); err != nil {
 		return err
 	}
 	return server.router.Start(address)

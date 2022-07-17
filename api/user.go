@@ -1,28 +1,40 @@
 package api
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/checkrates/Fime/db/postgres"
+	"github.com/checkrates/Fime/token"
 	"github.com/checkrates/Fime/util"
 	"github.com/labstack/echo"
 	"github.com/lib/pq"
 )
 
-type createUserRequest struct {
-	Name     string `json:"name" validate:"required,alphanum"`
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=8"`
-}
-
-type createUserResponse struct {
+type userResponse struct {
 	ID        int64     `json:"id"`
 	Name      string    `json:"username"`
 	Email     string    `json:"email"`
 	CreatedAt time.Time `json:"createdAt"`
+}
+
+func newUserResponse(dbUser postgres.User) userResponse {
+	return userResponse{
+		ID:        dbUser.ID,
+		Name:      dbUser.Name,
+		Email:     dbUser.Email,
+		CreatedAt: dbUser.CreatedAt,
+	}
+}
+
+type createUserRequest struct {
+	Name     string `json:"name" validate:"required,alphanum"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8"`
 }
 
 // createUser takes a JSON request and returns the newly created User object
@@ -59,13 +71,49 @@ func (server *Server) createUser(ctx echo.Context) error {
 		}
 	}
 
-	resp := createUserResponse{
-		ID:        user.ID,
-		Name:      user.Name,
-		Email:     user.Email,
-		CreatedAt: user.CreatedAt,
-	}
+	resp := newUserResponse(user)
 	return ctx.JSON(http.StatusCreated, resp)
+}
+
+type loginUserRequest struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8"`
+}
+
+type loginUserResponse struct {
+	AccessToken string       `json:"access_token"`
+	User        userResponse `json:"user"`
+}
+
+func (server *Server) loginUser(ctx echo.Context) error {
+	var req *loginUserRequest
+	if err := ctx.Bind(&req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
+	}
+
+	user, err := server.store.UserByEmail(req.Email)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return ctx.JSON(http.StatusNotFound, errorResponse(err))
+		}
+		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	}
+
+	err = util.ValidatePassword(req.Password, user.HashedPassword)
+	if err != nil {
+		return ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+	}
+
+	accessToken, err := server.token.CreateAccess(user.ID, server.config.Token.AccessExpiration)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	}
+
+	resp := loginUserResponse{
+		AccessToken: accessToken,
+		User:        newUserResponse(user),
+	}
+	return ctx.JSON(http.StatusOK, resp)
 }
 
 type getUserParams struct {
@@ -81,9 +129,17 @@ func (server *Server) getUser(ctx echo.Context) error {
 			fmt.Errorf("invalid ID")))
 	}
 
+	fmt.Println("Reach the API endpoint")
+
 	// Validate the get request params
 	req := getUserParams{
 		ID: id,
+	}
+
+	authPayload := ctx.Get(authPayloadKey).(*token.Payload)
+	if authPayload == nil {
+		err := errors.New("cannot retrived user if not authenticated")
+		return ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 	}
 
 	if err = ctx.Validate(&req); err != nil {
@@ -95,7 +151,8 @@ func (server *Server) getUser(ctx echo.Context) error {
 		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 
-	return ctx.JSON(http.StatusOK, user)
+	resp := newUserResponse(user)
+	return ctx.JSON(http.StatusOK, resp)
 }
 
 type listUserParams struct {
@@ -133,10 +190,21 @@ func (server *Server) listUsers(ctx echo.Context) error {
 		Offset: int64((req.Page - 1) * req.Size),
 	}
 
-	user, err := server.store.Users(arg)
+	authPayload := ctx.Get(authPayloadKey).(*token.Payload)
+	if authPayload == nil {
+		err := errors.New("cannot retrived users if not authenticated")
+		return ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+	}
+
+	users, err := server.store.Users(arg)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 
-	return ctx.JSON(http.StatusOK, user)
+	var resp []userResponse
+	for _, u := range users {
+		resp = append(resp, newUserResponse(u))
+	}
+
+	return ctx.JSON(http.StatusOK, resp)
 }

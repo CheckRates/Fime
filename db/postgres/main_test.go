@@ -18,12 +18,17 @@ import (
 var dal Store
 
 func TestMain(m *testing.M) {
-	conn, err := sqlx.Open("postgres", config.New().Database.ConnString)
+	config, err := config.Load("../../")
+	if err != nil {
+		log.Fatal("TEST: Cannot load configuration file")
+	}
+
+	conn, err := sqlx.Open("postgres", config.ConnString)
 	if err != nil {
 		log.Fatal("TEST: Cannot connect to the database: ", err)
 	}
 
-	dal, err = NewStore(conn)
+	dal, _ = NewStore(conn)
 	os.Exit(m.Run())
 }
 

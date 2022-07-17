@@ -1,22 +1,19 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/checkrates/Fime/db/postgres"
+	"github.com/checkrates/Fime/token"
 	"github.com/labstack/echo"
 )
-
-type createTagParams struct {
-	Tag string
-}
 
 type postImageParams struct {
 	Name       string                     `json:"name"`
 	EncodedImg string                     `json:"image"`
-	UserID     int64                      `json:"ownerID"`
 	Tags       []postgres.CreateTagParams `json:"tags"`
 }
 
@@ -30,17 +27,24 @@ func (server *Server) postImage(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
 	}
 
-	// Upload image to S3 bucket and get resource URL
-	imgURL, err := server.UploadImage(req)
-	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errorResponse((err)))
+	authPayload := ctx.Get(authPayloadKey).(*token.Payload)
+	if authPayload == nil {
+		err := errors.New("cannot retrived user if not authenticated")
+		return ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 	}
+
+	// Upload image to S3 bucket and get resource URL
+	//imgURL, err := server.UploadImage(req)
+	//if err != nil {
+	//	return ctx.JSON(http.StatusInternalServerError, errorResponse((err)))
+	//}
+	imgURL := "www.coolimage.com" // FIXME: Connect to AWS S3 bucket
 
 	// Make the request to the database and post image
 	arg := postgres.MakePostParams{
 		Name:   req.Name,
 		URL:    imgURL,
-		UserID: req.UserID,
+		UserID: authPayload.UserID,
 		Tags:   req.Tags,
 	}
 
@@ -61,7 +65,7 @@ func (server *Server) getImage(ctx echo.Context) error {
 	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("Invalid ID")))
+			fmt.Errorf("invalid ID")))
 	}
 
 	// Validate the get request params
@@ -73,12 +77,18 @@ func (server *Server) getImage(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
 	}
 
-	img, err := server.store.GetPostTx(ctx.Request().Context(), req.ID)
+	post, err := server.store.GetPostTx(ctx.Request().Context(), req.ID)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 
-	return ctx.JSON(http.StatusOK, img)
+	authPayload := ctx.Get(authPayloadKey).(*token.Payload)
+	if post.Image.OwnerID != authPayload.UserID {
+		err := errors.New("image does not belong to authenticated user")
+		return ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+	}
+
+	return ctx.JSON(http.StatusOK, post)
 }
 
 type deleteImageParam struct {
@@ -90,7 +100,7 @@ func (server *Server) deleteImage(ctx echo.Context) error {
 	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("Invalid ID")))
+			fmt.Errorf("invalid ID")))
 	}
 
 	// Validate the delete request params
@@ -102,15 +112,27 @@ func (server *Server) deleteImage(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
 	}
 
-	// Delete image in the S3 repo
-	if err = server.DeleteImage(req.ID); err != nil {
+	img, err := server.store.Image(id)
+	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	}
+
+	authPayload := ctx.Get(authPayloadKey).(*token.Payload)
+	if img.OwnerID != authPayload.UserID {
+		err := errors.New("image does not belong to authenticated user")
+		return ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 	}
 
 	err = server.store.DeletePostTx(ctx.Request().Context(), req.ID)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
+
+	// FIXME:
+	// Delete image in the S3 repo
+	//if err = server.DeleteImage(req.ID); err != nil {
+	//	return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	//}
 
 	return ctx.JSON(http.StatusOK, "Image ID "+fmt.Sprint(req.ID)+" deleted")
 }
@@ -138,6 +160,17 @@ func (server *Server) updateImage(ctx echo.Context) error {
 		Tags: req.Tags,
 	}
 
+	img, err := server.store.Image(arg.ID)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	}
+
+	authPayload := ctx.Get(authPayloadKey).(*token.Payload)
+	if img.OwnerID != authPayload.UserID {
+		err := errors.New("image does not belong to authenticated user")
+		return ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+	}
+
 	imgPost, err := server.store.UpdatePostTx(ctx.Request().Context(), arg)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
@@ -155,13 +188,13 @@ func (server *Server) listImage(ctx echo.Context) error {
 	page, err := strconv.Atoi(ctx.QueryParam("page"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("Invalid page value")))
+			fmt.Errorf("invalid page value")))
 	}
 
 	size, err := strconv.Atoi(ctx.QueryParam("size"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("Invalid size value")))
+			fmt.Errorf("invalid size value")))
 	}
 
 	// Validate list request params
@@ -172,6 +205,12 @@ func (server *Server) listImage(ctx echo.Context) error {
 
 	if err = ctx.Validate(&req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
+	}
+
+	authPayload := ctx.Get(authPayloadKey).(*token.Payload)
+	if authPayload == nil {
+		return ctx.JSON(http.StatusUnauthorized, errorResponse(
+			fmt.Errorf("cannot access images without being logged in")))
 	}
 
 	// Request list of image posts to the databse
@@ -198,19 +237,19 @@ func (server *Server) listUserImages(ctx echo.Context) error {
 	userID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("Invalid ID value")))
+			fmt.Errorf("invalid ID value")))
 	}
 
 	page, err := strconv.Atoi(ctx.QueryParam("page"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("Invalid page value")))
+			fmt.Errorf("invalid page value")))
 	}
 
 	size, err := strconv.Atoi(ctx.QueryParam("size"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("Invalid size value")))
+			fmt.Errorf("invalid size value")))
 	}
 
 	// Validate list request params
@@ -222,6 +261,12 @@ func (server *Server) listUserImages(ctx echo.Context) error {
 
 	if err = ctx.Validate(&req); err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
+	}
+
+	authPayload := ctx.Get(authPayloadKey).(*token.Payload)
+	if req.UserID != authPayload.UserID {
+		err := errors.New("images do not belong to authenticated user")
+		return ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 	}
 
 	// Request list of user's image posts to the database
