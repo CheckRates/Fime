@@ -3,25 +3,28 @@ package postgres
 import (
 	"testing"
 
+	"github.com/checkrates/Fime/pkg/models"
 	"github.com/stretchr/testify/require"
 )
 
-func createTestImageTags(t *testing.T) []ImageTag {
+func createTestImageTags(t *testing.T) []models.ImageTag {
 	var err error
-	var imageTags []ImageTag
+	var imageTags []models.ImageTag
 
 	img := createTestImage(t)
 	for i := 0; i < 3; i++ {
 		tag := createTestTag(t)
-		it := ImageTag{
+		it := models.ImageTag{
 			ImageID: img.ID,
 			TagID:   tag.ID,
 		}
-		err = dal.CreateImageTag(it)
+		err = imageTag.Create(it)
+		require.NoError(t, err)
+
 		imageTags = append(imageTags, it)
 	}
 
-	tags, err := dal.GetTagsByImageID(img.ID)
+	tags, err := imageTag.GetTagsByImageID(img.ID)
 
 	require.NoError(t, err)
 	require.NotEmpty(t, tags)
@@ -38,12 +41,13 @@ func TestDeleteImageTag(t *testing.T) {
 	imgTags := createTestImageTags(t)
 
 	imgID := imgTags[0].ImageID
-	oldTags, err := dal.GetTagsByImageID(imgID)
+	oldTags, err := imageTag.GetTagsByImageID(imgID)
+	require.NoError(t, err)
 
 	// Disassociate the first tag from image
-	dal.DeleteImageTag(imgTags[0])
+	imageTag.Delete(imgTags[0])
 
-	tags, err := dal.GetTagsByImageID(imgID)
+	tags, err := imageTag.GetTagsByImageID(imgID)
 
 	require.NoError(t, err)
 	require.NotEqual(t, len(oldTags), len(tags))
@@ -53,21 +57,21 @@ func TestDeleteImageTag(t *testing.T) {
 func TestGetImagesByTagID(t *testing.T) {
 	var err error
 	tag := createTestTag(t)
-	imgs := [2]Image{createTestImage(t), createTestImage(t)}
+	imgs := [2]models.Image{createTestImage(t), createTestImage(t)}
 
-	imgTag := ImageTag{
+	imgTag := models.ImageTag{
 		ImageID: imgs[0].ID,
 		TagID:   tag.ID,
 	}
 
-	imgTag2 := ImageTag{
+	imgTag2 := models.ImageTag{
 		ImageID: imgs[1].ID,
 		TagID:   tag.ID,
 	}
 
-	err = dal.CreateImageTag(imgTag)
-	err = dal.CreateImageTag(imgTag2)
-	retImgs, err := dal.GetImagesByTagID(tag.ID)
+	err = imageTag.Create(imgTag)
+	err = imageTag.Create(imgTag2)
+	retImgs, err := imageTag.GetImagesByTagID(tag.ID)
 
 	require.NoError(t, err)
 	require.Equal(t, len(retImgs), len(imgs))
@@ -78,13 +82,13 @@ func TestGetTagsByImage(t *testing.T) {
 	var err error
 	img := createTestImage(t)
 	tag := createTestTag(t)
-	it := ImageTag{
+	it := models.ImageTag{
 		ImageID: img.ID,
 		TagID:   tag.ID,
 	}
 
-	err = dal.CreateImageTag(it)
-	imgs, err := dal.GetImagesByTagID(tag.ID)
+	err = imageTag.Create(it)
+	imgs, err := imageTag.GetImagesByTagID(tag.ID)
 
 	require.NoError(t, err)
 	require.NotEmpty(t, imgs)
@@ -95,17 +99,22 @@ func TestDeleteAllImageTags(t *testing.T) {
 	img := createTestImage(t)
 	for i := 0; i < 3; i++ {
 		tag := createTestTag(t)
-		it := ImageTag{
+		it := models.ImageTag{
 			ImageID: img.ID,
 			TagID:   tag.ID,
 		}
 
-		err = dal.CreateImageTag(it)
+		err = imageTag.Create(it)
+		require.NoError(t, err)
 	}
 
-	tags, err := dal.GetTagsByImageID(img.ID)
-	err = dal.DeleteAllImageTags(img.ID)
-	curTags, err := dal.GetTagsByImageID(img.ID)
+	tags, err := imageTag.GetTagsByImageID(img.ID)
+	require.NoError(t, err)
+
+	err = imageTag.DeleteAllFromImage(img.ID)
+	require.NoError(t, err)
+
+	curTags, err := imageTag.GetTagsByImageID(img.ID)
 
 	require.NoError(t, err)
 	require.NotEmpty(t, tags)

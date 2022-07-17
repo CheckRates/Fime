@@ -4,21 +4,22 @@ import (
 	"database/sql"
 	"testing"
 
+	"github.com/checkrates/Fime/pkg/models"
 	"github.com/checkrates/Fime/util"
 	"github.com/stretchr/testify/require"
 )
 
-func createTestUser(t *testing.T) User {
+func createTestUser(t *testing.T) models.User {
 	hashedPassword, err := util.HashPassword(util.RandomString(8))
 	require.NoError(t, err)
 
-	arg := CreateUserParams{
+	arg := models.CreateUserParams{
 		Name:           util.RandomString(6),
 		Email:          util.RandomString(7) + "@email.com",
 		HashedPassword: hashedPassword,
 	}
 
-	user, err := dal.CreateUser(arg)
+	user, err := user.Create(arg)
 	require.NoError(t, err)
 	require.NotZero(t, user)
 
@@ -37,54 +38,54 @@ func TestCreateUser(t *testing.T) {
 
 func TestGetUserByEmail(t *testing.T) {
 
-	user := createTestUser(t)
-	user2, err := dal.UserByEmail(user.Email)
+	user1 := createTestUser(t)
+	user2, err := user.FindByEmail(user1.Email)
 
 	require.NoError(t, err)
 	require.NotEmpty(t, user2)
 
-	require.Equal(t, user.ID, user2.ID)
-	require.Equal(t, user.Name, user2.Name)
-	require.Equal(t, user.Email, user2.Email)
+	require.Equal(t, user1.ID, user2.ID)
+	require.Equal(t, user1.Name, user2.Name)
+	require.Equal(t, user1.Email, user2.Email)
 }
 
 func TestGetUser(t *testing.T) {
 
-	user := createTestUser(t)
-	user2, err := dal.User(user.ID)
+	user1 := createTestUser(t)
+	user2, err := user.FindById(user1.ID)
 
 	require.NoError(t, err)
 	require.NotEmpty(t, user2)
 
-	require.Equal(t, user.ID, user2.ID)
-	require.Equal(t, user.Name, user2.Name)
+	require.Equal(t, user1.ID, user2.ID)
+	require.Equal(t, user1.Name, user2.Name)
 }
 
 func TestUpdateUser(t *testing.T) {
-	user := createTestUser(t)
+	user1 := createTestUser(t)
 
-	updateArgs := UpdateUserParams{
-		ID:   user.ID,
+	updateArgs := models.UpdateUserParams{
+		ID:   user1.ID,
 		Name: util.RandomString(6),
 	}
 
-	beforeUser := user
-	user, err := dal.UpdateUser(updateArgs)
+	beforeUser := user1
+	user1, err := user.Update(updateArgs)
 
 	require.NoError(t, err)
 
-	require.Equal(t, user.ID, beforeUser.ID)
-	require.Equal(t, user.Name, updateArgs.Name)
+	require.Equal(t, user1.ID, beforeUser.ID)
+	require.Equal(t, user1.Name, updateArgs.Name)
 }
 
 func TestDeleteUser(t *testing.T) {
 
-	user := createTestUser(t)
+	user1 := createTestUser(t)
 
-	err := dal.DeleteUser(user.ID)
+	err := user.Delete(user1.ID)
 	require.NoError(t, err)
 
-	user2, err := dal.User(user.ID)
+	user2, err := user.FindById(user1.ID)
 	require.Error(t, err)
 	require.EqualError(t, err, sql.ErrNoRows.Error())
 	require.Empty(t, user2)
@@ -95,12 +96,12 @@ func TestListUser(t *testing.T) {
 		createTestUser(t)
 	}
 
-	listArgs := ListParams{
+	listArgs := models.ListUserParams{
 		Limit:  5,
 		Offset: 5,
 	}
 
-	users, err := dal.Users(listArgs)
+	users, err := user.GetMultiple(listArgs)
 	require.NoError(t, err)
 
 	for _, user := range users {

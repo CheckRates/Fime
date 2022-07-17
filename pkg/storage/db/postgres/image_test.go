@@ -4,20 +4,21 @@ import (
 	"database/sql"
 	"testing"
 
+	"github.com/checkrates/Fime/pkg/models"
 	"github.com/checkrates/Fime/util"
 	"github.com/stretchr/testify/require"
 )
 
-func createTestImage(t *testing.T) Image {
+func createTestImage(t *testing.T) models.Image {
 	user := createTestUser(t)
 
-	args := CreateImageParams{
+	args := models.CreateImageParams{
 		Name:    util.RandomString(5),
 		URL:     "www." + util.RandomString(10) + ".com",
 		OwnerID: user.ID,
 	}
 
-	img, err := dal.CreateImage(args)
+	img, err := image.Create(args)
 	require.NoError(t, err)
 	require.NotZero(t, img.ID)
 	require.Equal(t, args.Name, img.Name)
@@ -34,7 +35,7 @@ func TestCreateImage(t *testing.T) {
 func TestGetImage(t *testing.T) {
 
 	img1 := createTestImage(t)
-	img2, err := dal.Image(img1.ID)
+	img2, err := image.FindById(img1.ID)
 
 	require.NoError(t, err)
 	require.NotEmpty(t, img2)
@@ -47,13 +48,13 @@ func TestUpdateImage(t *testing.T) {
 
 	img := createTestImage(t)
 
-	img2Args := UpdateImageParams{
+	img2Args := models.UpdateImageParams{
 		ID:   img.ID,
 		Name: util.RandomString(6),
 	}
 
 	beforeImg := img
-	img, err := dal.UpdateImage(img2Args)
+	img, err := image.Update(img2Args)
 
 	require.NoError(t, err)
 	require.Equal(t, img.ID, beforeImg.ID)
@@ -64,10 +65,10 @@ func TestDeleteImage(t *testing.T) {
 
 	img1 := createTestImage(t)
 
-	err := dal.DeleteImage(img1.ID)
+	err := image.Delete(img1.ID)
 	require.NoError(t, err)
 
-	img2, err := dal.Image(img1.ID)
+	img2, err := image.FindById(img1.ID)
 	require.Error(t, err)
 	require.EqualError(t, err, sql.ErrNoRows.Error())
 	require.Empty(t, img2)
@@ -78,12 +79,12 @@ func TestImageList(t *testing.T) {
 		createTestImage(t)
 	}
 
-	listArgs := ListParams{
+	listArgs := models.ListImagesParams{
 		Limit:  5,
 		Offset: 5,
 	}
 
-	images, err := dal.Images(listArgs)
+	images, err := image.GetMultiple(listArgs)
 	require.NoError(t, err)
 
 	for _, img := range images {

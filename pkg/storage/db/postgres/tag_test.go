@@ -4,16 +4,17 @@ import (
 	"database/sql"
 	"testing"
 
+	"github.com/checkrates/Fime/pkg/models"
 	"github.com/checkrates/Fime/util"
 	"github.com/stretchr/testify/require"
 )
 
-func createTestTag(t *testing.T) Tag {
-	args := CreateTagParams{
+func createTestTag(t *testing.T) models.Tag {
+	args := models.CreateTagParams{
 		Name: util.RandomString(4),
 	}
 
-	tag, err := dal.CreateTag(args)
+	tag, err := tag.Create(args)
 	require.NoError(t, err)
 	require.Equal(t, args.Name, tag.Name)
 	require.NotZero(t, tag.ID)
@@ -28,11 +29,11 @@ func TestCreateTag(t *testing.T) {
 
 func TestCreateDuplicatedTag(t *testing.T) {
 	tag1 := createTestTag(t)
-	tag2Args := CreateTagParams{
+	tag2Args := models.CreateTagParams{
 		Name: tag1.Name,
 	}
 
-	tag2, err := dal.CreateTag(tag2Args)
+	tag2, err := tag.Create(tag2Args)
 
 	require.NoError(t, err)
 	require.NotEmpty(t, tag2)
@@ -43,24 +44,24 @@ func TestCreateDuplicatedTag(t *testing.T) {
 
 func TestGetTag(t *testing.T) {
 
-	tag := createTestTag(t)
-	tag2, err := dal.Tag(tag.ID)
+	tag1 := createTestTag(t)
+	tag2, err := tag.FindById(tag1.ID)
 
 	require.NoError(t, err)
 	require.NotEmpty(t, tag2)
 
-	require.Equal(t, tag.ID, tag2.ID)
-	require.Equal(t, tag.Name, tag2.Name)
+	require.Equal(t, tag1.ID, tag2.ID)
+	require.Equal(t, tag1.Name, tag2.Name)
 }
 
 func TestDeleteTag(t *testing.T) {
 
-	tag := createTestTag(t)
+	tag1 := createTestTag(t)
 
-	err := dal.DeleteTag(tag.ID)
+	err := tag.Delete(tag1.ID)
 	require.NoError(t, err)
 
-	tag2, err := dal.Tag(tag.ID)
+	tag2, err := tag.FindById(tag1.ID)
 	require.Error(t, err)
 	require.EqualError(t, err, sql.ErrNoRows.Error())
 	require.Empty(t, tag2)
@@ -71,12 +72,12 @@ func TestListTag(t *testing.T) {
 		createTestTag(t)
 	}
 
-	listArgs := ListParams{
+	listArgs := models.ListTagsParams{
 		Limit:  5,
 		Offset: 5,
 	}
 
-	tags, err := dal.Tags(listArgs)
+	tags, err := tag.GetMultiple(listArgs)
 	require.NoError(t, err)
 
 	for _, tag := range tags {

@@ -3,59 +3,33 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"log"
-	"os"
 	"testing"
 
-	"github.com/checkrates/Fime/config"
+	"github.com/checkrates/Fime/pkg/models"
 	"github.com/checkrates/Fime/util"
-	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/require"
 )
 
-// Test data access layer
-var dal Store
-
-func TestMain(m *testing.M) {
-	config, err := config.Load("../../")
-	if err != nil {
-		log.Fatal("TEST: Cannot load configuration file")
-	}
-
-	conn, err := sqlx.Open("postgres", config.ConnString)
-	if err != nil {
-		log.Fatal("TEST: Cannot connect to the database: ", err)
-	}
-
-	dal, _ = NewStore(conn)
-	os.Exit(m.Run())
-}
-
-/*
-*	Image Post Tests
- */
-
-func createTestImagePost(t *testing.T) ImagePostResult {
+func createTestImagePost(t *testing.T) models.ImagePost {
 	var err error
 	user := createTestUser(t)
 
-	var tagsArgs []CreateTagParams
+	var tagsArgs []models.CreateTagParams
 	for i := 0; i < 3; i++ {
-		arg := CreateTagParams{
+		arg := models.CreateTagParams{
 			Name: util.RandomString(4),
 		}
 		tagsArgs = append(tagsArgs, arg)
 	}
 
-	postArgs := MakePostParams{
+	postArgs := models.CreatePostParams{
 		Name:   "IMG_2020",
 		URL:    "www.coolImage.com",
 		UserID: user.ID,
 		Tags:   tagsArgs,
 	}
 
-	newPost, err := dal.MakePostTx(context.Background(), postArgs)
+	newPost, err := post.Create(context.Background(), postArgs)
 
 	require.NoError(t, err)
 	require.NotZero(t, newPost.Image.ID)
@@ -78,7 +52,7 @@ func TestMakePostTx(t *testing.T) {
 func TestGetImagePost(t *testing.T) {
 
 	imgPost := createTestImagePost(t)
-	imgPost2, err := dal.GetPostTx(context.Background(), imgPost.Image.ID)
+	imgPost2, err := post.FindById(context.Background(), imgPost.Image.ID)
 
 	require.NoError(t, err)
 	require.NotEmpty(t, imgPost2)
@@ -93,10 +67,10 @@ func TestGetImagePost(t *testing.T) {
 func TestUpdateImagePost(t *testing.T) {
 	imgPost := createTestImagePost(t)
 
-	postArgs := UpdatePostParams{
+	postArgs := models.UpdatePostParams{
 		ID:   imgPost.Image.ID,
 		Name: util.RandomString(6),
-		Tags: []CreateTagParams{
+		Tags: []models.CreateTagParams{
 			{
 				Name: util.RandomString(4),
 			},
@@ -106,7 +80,7 @@ func TestUpdateImagePost(t *testing.T) {
 		},
 	}
 
-	updatedPost, err := dal.UpdatePostTx(context.Background(), postArgs)
+	updatedPost, err := post.Update(context.Background(), postArgs)
 
 	require.NoError(t, err)
 	require.Equal(t, updatedPost.Image.ID, imgPost.Image.ID)
@@ -117,10 +91,10 @@ func TestUpdateImagePost(t *testing.T) {
 func TestDeleteImagePost(t *testing.T) {
 	imgPost := createTestImagePost(t)
 
-	err := dal.DeletePostTx(context.Background(), imgPost.Image.ID)
+	err := post.Delete(context.Background(), imgPost.Image.ID)
 	require.NoError(t, err)
 
-	imgPost2, err := dal.GetPostTx(context.Background(), imgPost.Image.ID)
+	imgPost2, err := post.FindById(context.Background(), imgPost.Image.ID)
 	require.Error(t, err)
 	require.EqualError(t, err, sql.ErrNoRows.Error())
 	require.Empty(t, imgPost2)
@@ -131,12 +105,12 @@ func TestImagePostList(t *testing.T) {
 		createTestImagePost(t)
 	}
 
-	listArgs := ListParams{
+	listArgs := models.ListImagesParams{
 		Limit:  5,
 		Offset: 5,
 	}
 
-	posts, err := dal.ListPostTx(context.Background(), listArgs)
+	posts, err := post.GetMutiple(context.Background(), listArgs)
 	require.NoError(t, err)
 
 	for _, post := range posts {
