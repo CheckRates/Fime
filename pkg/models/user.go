@@ -11,6 +11,23 @@ type User struct {
 	CreatedAt         time.Time `db:"createdAt"`
 }
 
+// Public facing user struct
+type UserResponse struct {
+	ID        int64     `json:"id"`
+	Name      string    `json:"username"`
+	Email     string    `json:"email"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+func NewUserResponse(dbUser User) UserResponse {
+	return UserResponse{
+		ID:        dbUser.ID,
+		Name:      dbUser.Name,
+		Email:     dbUser.Email,
+		CreatedAt: dbUser.CreatedAt,
+	}
+}
+
 // Parameters to list users from a repository
 type ListUserParams struct {
 	Limit  int64 `json:"limit"`

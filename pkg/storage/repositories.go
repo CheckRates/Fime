@@ -15,7 +15,7 @@ type PostRepository interface {
 	Delete(ctx context.Context, id int64) error
 }
 
-type UserRepoistory interface {
+type UserRepository interface {
 	FindById(id int64) (models.User, error)
 	FindByEmail(email string) (models.User, error)
 	GetMultiple(args models.ListUserParams) ([]models.User, error)

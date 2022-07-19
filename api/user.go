@@ -22,7 +22,7 @@ type userResponse struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-func newUserResponse(dbUser postgres.User) userResponse {
+func NewUserResponse(dbUser postgres.User) userResponse {
 	return userResponse{
 		ID:        dbUser.ID,
 		Name:      dbUser.Name,

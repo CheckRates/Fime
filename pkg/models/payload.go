@@ -1,4 +1,4 @@
-package token
+package models
 
 import (
 	"errors"
@@ -20,7 +20,7 @@ type Payload struct {
 	ExpirationAt time.Time `json:"expiredAt"`
 }
 
-// NewAccessPayload takes an userId and duration and creates a token payload
+// Takes an userId and duration and creates a token payload
 func NewAccessPayload(userID int64, duration time.Duration) (*Payload, error) {
 	tokenID, err := uuid.NewRandom()
 	if err != nil {
@@ -36,7 +36,7 @@ func NewAccessPayload(userID int64, duration time.Duration) (*Payload, error) {
 	return &payload, nil
 }
 
-// NewRefreshPayload takes an userId and duration and creates a token payload
+// Takes an userId and duration and creates a token payload
 func NewRefreshPayload(userID int64, duration time.Duration) (*Payload, error) {
 	tokenID, err := uuid.NewRandom()
 	if err != nil {

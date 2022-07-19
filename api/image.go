@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -160,17 +161,6 @@ func (server *Server) updateImage(ctx echo.Context) error {
 		Tags: req.Tags,
 	}
 
-	img, err := server.store.Image(arg.ID)
-	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-	}
-
-	authPayload := ctx.Get(authPayloadKey).(*token.Payload)
-	if img.OwnerID != authPayload.UserID {
-		err := errors.New("image does not belong to authenticated user")
-		return ctx.JSON(http.StatusUnauthorized, errorResponse(err))
-	}
-
 	imgPost, err := server.store.UpdatePostTx(ctx.Request().Context(), arg)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
@@ -184,33 +174,10 @@ type listPostParams struct {
 	Size int `validate:"required,min=1,max=10"`
 }
 
-func (server *Server) listImage(ctx echo.Context) error {
-	page, err := strconv.Atoi(ctx.QueryParam("page"))
-	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("invalid page value")))
-	}
-
-	size, err := strconv.Atoi(ctx.QueryParam("size"))
-	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, errorResponse(
-			fmt.Errorf("invalid size value")))
-	}
-
-	// Validate list request params
-	req := listPostParams{
+func (server *Server) listImage(ctx context.Context, size, page int64) error {
+	req := models.ListPost{
 		Page: page,
 		Size: size,
-	}
-
-	if err = ctx.Validate(&req); err != nil {
-		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
-	}
-
-	authPayload := ctx.Get(authPayloadKey).(*token.Payload)
-	if authPayload == nil {
-		return ctx.JSON(http.StatusUnauthorized, errorResponse(
-			fmt.Errorf("cannot access images without being logged in")))
 	}
 
 	// Request list of image posts to the databse

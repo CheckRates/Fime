@@ -5,7 +5,15 @@ type ImagePost struct {
 	Tags  []Tag `json:"tags"`
 }
 
-// Provides all data for creating a image post in Fime
+// Provides all data to create a post in a service/usecase
+type PostData struct {
+	Name       string
+	EncodedImg string
+	UserId     int64
+	Tags       []CreateTagParams
+}
+
+// Provides all data for saving a image post in a repository
 type CreatePostParams struct {
 	Name   string            `json:"name"`
 	URL    string            `json:"url"`

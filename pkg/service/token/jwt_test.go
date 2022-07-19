@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/checkrates/Fime/pkg/models"
 	"github.com/checkrates/Fime/util"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/require"
@@ -41,12 +42,12 @@ func TestExpiredJWTToken(t *testing.T) {
 
 	payload, err := maker.VerifyToken(token)
 	require.Error(t, err)
-	require.EqualError(t, err, ErrExpiredToken.Error())
+	require.EqualError(t, err, models.ErrExpiredToken.Error())
 	require.Nil(t, payload)
 }
 
 func TestInvalidJWTTokenAlgNone(t *testing.T) {
-	payload, err := NewAccessPayload(util.RandomNumber(3), time.Minute)
+	payload, err := models.NewAccessPayload(util.RandomNumber(3), time.Minute)
 	require.NoError(t, err)
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodNone, payload)
@@ -58,6 +59,6 @@ func TestInvalidJWTTokenAlgNone(t *testing.T) {
 
 	payload, err = maker.VerifyToken(token)
 	require.Error(t, err)
-	require.EqualError(t, err, ErrInvalidToken.Error())
+	require.EqualError(t, err, models.ErrInvalidToken.Error())
 	require.Nil(t, payload)
 }
