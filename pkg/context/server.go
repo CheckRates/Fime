@@ -1,9 +1,8 @@
-package api
+package http
 
 import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/checkrates/Fime/config"
-	"github.com/checkrates/Fime/db/postgres"
 	"github.com/checkrates/Fime/token"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo"
@@ -79,9 +78,4 @@ func (server *Server) Start(address string) error {
 		return err
 	}
 	return server.router.Start(address)
-}
-
-// errorResponse formats error to Echo
-func errorResponse(err error) echo.Map {
-	return echo.Map{"error": err.Error()}
 }

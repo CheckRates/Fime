@@ -85,7 +85,7 @@ func (p PostService) Update(ctx context.Context, id int64, name string, tags []m
 	return &imgPost, nil
 }
 
-func (p PostService) GetMultiple(ctx context.Context, size, page int64) ([]models.ImagePost, error) {
+func (p PostService) GetMultiple(ctx context.Context, size, page int) ([]models.ImagePost, error) {
 	arg := models.ListImagesParams{
 		Limit:  size,
 		Offset: (page - 1) * size,
@@ -99,7 +99,7 @@ func (p PostService) GetMultiple(ctx context.Context, size, page int64) ([]model
 	return imgs, nil
 }
 
-func (p PostService) GetByUser(ctx context.Context, userId, size, page int64) ([]models.ImagePost, error) {
+func (p PostService) GetByUser(ctx context.Context, userId int64, size, page int) ([]models.ImagePost, error) {
 	arg := models.ListUserImagesParams{
 		UserID: userId,
 		Limit:  size,

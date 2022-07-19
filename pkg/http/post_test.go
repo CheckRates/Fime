@@ -1,22 +1,6 @@
-package api
+package http
 
-import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"net/http"
-	"net/http/httptest"
-	"testing"
-	"time"
-
-	"github.com/checkrates/Fime/db/mock"
-	"github.com/checkrates/Fime/db/postgres"
-	"github.com/checkrates/Fime/util"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/require"
-)
-
+/*
 func TestGetImagePostAPI(t *testing.T) {
 	imgPost := randomImagePost()
 
@@ -74,3 +58,4 @@ func randomImagePost() postgres.ImagePostResult {
 		},
 	}
 }
+*/

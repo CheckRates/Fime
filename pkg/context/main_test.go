@@ -1,15 +1,6 @@
-package api
+package http
 
-import (
-	"testing"
-	"time"
-
-	"github.com/checkrates/Fime/config"
-	"github.com/checkrates/Fime/db/postgres"
-	"github.com/checkrates/Fime/util"
-	"github.com/stretchr/testify/require"
-)
-
+/*
 func newTestServer(t *testing.T, store postgres.Store) *Server {
 	config := config.Config{
 		Token: config.JWT{
@@ -23,3 +14,4 @@ func newTestServer(t *testing.T, store postgres.Store) *Server {
 
 	return server
 }
+*/

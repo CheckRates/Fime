@@ -1,17 +1,37 @@
-package api
+package http
 
 import (
 	"fmt"
 	"net/http"
 	"strconv"
 
-	"github.com/checkrates/Fime/db/postgres"
-	"github.com/checkrates/Fime/token"
+	"github.com/checkrates/Fime/pkg/models"
+	"github.com/checkrates/Fime/pkg/service"
 	"github.com/labstack/echo"
 )
 
-// listTags takes limit and offset params and returns the JSON tags objects
-func (server *Server) listTags(ctx echo.Context) error {
+type TagPort interface {
+	GetMultiple(ctx echo.Context) error
+}
+
+type tagApi struct {
+	tag service.TagUsecase
+}
+
+// Returns the default implementation of the tag port.
+func NewTagApi(tag service.TagUsecase) TagPort {
+	return tagApi{
+		tag: tag,
+	}
+}
+
+type listTagParams struct {
+	Page int `validate:"required,min=1"`
+	Size int `validate:"required,min=1,max=10"`
+}
+
+// Takes limit and offset params and returns the JSON tags objects
+func (t tagApi) GetMultiple(ctx echo.Context) error {
 	page, err := strconv.Atoi(ctx.QueryParam("page"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
@@ -24,8 +44,9 @@ func (server *Server) listTags(ctx echo.Context) error {
 			fmt.Errorf("invalid size value")))
 	}
 
-	// Validate list request params
-	req := listUserParams{
+	// Validates the URL params, they are grouped in a struct to facilitate the use
+	// of the Echo#Valicator
+	req := listTagParams{
 		Page: page,
 		Size: size,
 	}
@@ -34,19 +55,13 @@ func (server *Server) listTags(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
 	}
 
-	authPayload := ctx.Get(authPayloadKey).(*token.Payload)
+	authPayload := ctx.Get(authPayloadKey).(*models.Payload)
 	if authPayload == nil {
 		return ctx.JSON(http.StatusUnauthorized, errorResponse(
 			fmt.Errorf("cannot access tags without being logged in")))
 	}
 
-	// Request list of tags to the databse
-	arg := postgres.ListParams{
-		Limit:  int64(req.Size),
-		Offset: int64((req.Page - 1) * req.Size),
-	}
-
-	tags, err := server.store.Tags(arg)
+	tags, err := t.tag.GetMultiple(req.Size, req.Page)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
@@ -60,9 +75,8 @@ type listUserTagsParams struct {
 	Size int   `validate:"required,min=1,max=10"`
 }
 
-// listTags takes limit and offset params and returns all user tags
-func (server *Server) listUserTags(ctx echo.Context) error {
-	// Parse URL params
+// Takes limit and offset params and returns all user tags
+func (t tagApi) GetUserTags(ctx echo.Context) error {
 	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(
@@ -81,7 +95,8 @@ func (server *Server) listUserTags(ctx echo.Context) error {
 			fmt.Errorf("invalid size value")))
 	}
 
-	// Validate list request params
+	// Validates the URL params, they are grouped in a struct to facilitate the use
+	// of the Echo#Valicator
 	req := listUserTagsParams{
 		ID:   id,
 		Page: page,
@@ -92,20 +107,13 @@ func (server *Server) listUserTags(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
 	}
 
-	// Request list of tags to the databse
-	arg := postgres.ListUserTagsParams{
-		ID:     req.ID,
-		Limit:  req.Size,
-		Offset: (req.Page - 1) * req.Size,
-	}
-
-	authPayload := ctx.Get(authPayloadKey).(*token.Payload)
-	if arg.ID != authPayload.UserID {
+	authPayload := ctx.Get(authPayloadKey).(*models.Payload)
+	if req.ID != authPayload.UserID {
 		return ctx.JSON(http.StatusUnauthorized, errorResponse(
 			fmt.Errorf("cannot access user tags without being logged in")))
 	}
 
-	tags, err := server.store.GetUserTags(arg)
+	tags, err := t.tag.GetUserTags(req.ID, req.Size, req.Page)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}

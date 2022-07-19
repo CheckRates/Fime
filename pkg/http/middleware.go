@@ -1,11 +1,11 @@
-package api
+package http
 
 import (
 	"errors"
 	"net/http"
 	"strings"
 
-	"github.com/checkrates/Fime/token"
+	"github.com/checkrates/Fime/pkg/service"
 	"github.com/labstack/echo"
 )
 
@@ -15,7 +15,7 @@ const (
 	authPayloadKey = "auth_payload"
 )
 
-func authMiddleware(tokenMaker token.Maker) echo.MiddlewareFunc {
+func authMiddleware(tokenMaker service.TokenMaker) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ctx echo.Context) error {
 			authHeader := ctx.Request().Header.Get(authHeaderKey)

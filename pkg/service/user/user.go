@@ -78,7 +78,7 @@ func (u UserService) FindById(id int64) (*models.UserResponse, error) {
 }
 
 // Takes a size and the page number to provide a subset of users
-func (u UserService) GetMultiple(size, page int64) ([]models.UserResponse, error) {
+func (u UserService) GetMultiple(size, page int) ([]models.UserResponse, error) {
 	arg := models.ListUserParams{
 		Limit:  size,
 		Offset: (page - 1) * size,

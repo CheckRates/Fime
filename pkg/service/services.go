@@ -12,20 +12,20 @@ type PostUsecase interface {
 	FindById(ctx context.Context, id int64) (*models.ImagePost, error)
 	Delete(ctx context.Context, id int64) error
 	Update(ctx context.Context, id int64, name string, tags []models.CreateTagParams) (*models.ImagePost, error)
-	GetMultiple(ctx context.Context, size, page int64) ([]models.ImagePost, error)
-	GetByUser(ctx context.Context, userId, size, page int64) ([]models.ImagePost, error)
+	GetMultiple(ctx context.Context, size, page int) ([]models.ImagePost, error)
+	GetByUser(ctx context.Context, userId int64, size, page int) ([]models.ImagePost, error)
 }
 
 type UserUsecase interface {
 	Register(name, email, password string) (*models.UserResponse, error)
 	Login(email, password string) (*models.UserResponse, string, error)
 	FindById(id int64) (*models.UserResponse, error)
-	GetMultiple(size, page int64) ([]models.UserResponse, error)
+	GetMultiple(size, page int) ([]models.UserResponse, error)
 }
 
 type TagUsecase interface {
-	GetMultiple(size, page int64) ([]models.Tag, error)
-	GetUserTags(userId, size, page int64) ([]models.Tag, error)
+	GetMultiple(size, page int) ([]models.Tag, error)
+	GetUserTags(userId int64, size, page int) ([]models.Tag, error)
 }
 
 type TokenMaker interface {

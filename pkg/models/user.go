@@ -30,8 +30,8 @@ func NewUserResponse(dbUser User) UserResponse {
 
 // Parameters to list users from a repository
 type ListUserParams struct {
-	Limit  int64 `json:"limit"`
-	Offset int64 `json:"offset"`
+	Limit  int `json:"limit"`
+	Offset int `json:"offset"`
 }
 
 // Paramaters to create a new user in the repository

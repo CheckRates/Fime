@@ -12,8 +12,8 @@ type Image struct {
 
 // Parameters to list all images from a repository
 type ListImagesParams struct {
-	Limit  int64 `json:"limit"`
-	Offset int64 `json:"offset"`
+	Limit  int `json:"limit"`
+	Offset int `json:"offset"`
 }
 
 // Parameters to create a new image in the repository
@@ -32,6 +32,6 @@ type UpdateImageParams struct {
 // Parameters to list an user's images
 type ListUserImagesParams struct {
 	UserID int64 `json:"userID"`
-	Limit  int64 `json:"limit"`
-	Offset int64 `json:"offset"`
+	Limit  int   `json:"limit"`
+	Offset int   `json:"offset"`
 }

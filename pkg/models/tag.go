@@ -7,8 +7,8 @@ type Tag struct {
 
 // Parameters to list users from a repository
 type ListTagsParams struct {
-	Limit  int64 `json:"limit"`
-	Offset int64 `json:"offset"`
+	Limit  int `json:"limit"`
+	Offset int `json:"offset"`
 }
 
 // Parameters to create a tag
@@ -19,6 +19,6 @@ type CreateTagParams struct {
 // Parameters to list all tags a user has used in the images
 type ListUserTagsParams struct {
 	ID     int64 `json:"id"`
-	Limit  int64 `json:"limit"`
-	Offset int64 `json:"offset"`
+	Limit  int   `json:"limit"`
+	Offset int   `json:"offset"`
 }
