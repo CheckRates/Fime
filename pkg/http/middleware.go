@@ -15,7 +15,7 @@ const (
 	authPayloadKey = "auth_payload"
 )
 
-func authMiddleware(tokenMaker service.TokenMaker) echo.MiddlewareFunc {
+func AuthMiddleware(tokenMaker service.TokenMaker) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ctx echo.Context) error {
 			authHeader := ctx.Request().Header.Get(authHeaderKey)

@@ -8,17 +8,17 @@ import (
 	"github.com/checkrates/Fime/pkg/storage"
 )
 
-type PostService struct {
+type postService struct {
 	post storage.PostRepository
 }
 
 func NewPostService(post storage.PostRepository) service.PostUsecase {
-	return PostService{
+	return postService{
 		post: post,
 	}
 }
 
-func (p PostService) Create(ctx context.Context, postData models.PostData) (*models.ImagePost, error) {
+func (p postService) Create(ctx context.Context, postData models.PostData) (*models.ImagePost, error) {
 	// Upload image to S3 bucket and get resource URL
 	//imgURL, err := server.UploadImage(encondedImg)
 	//if err != nil {
@@ -41,7 +41,7 @@ func (p PostService) Create(ctx context.Context, postData models.PostData) (*mod
 	return &imgPost, nil
 }
 
-func (p PostService) FindById(ctx context.Context, id int64) (*models.ImagePost, error) {
+func (p postService) FindById(ctx context.Context, id int64) (*models.ImagePost, error) {
 	imgPost, err := p.post.FindById(ctx, id)
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (p PostService) FindById(ctx context.Context, id int64) (*models.ImagePost,
 	return &imgPost, nil
 }
 
-func (p PostService) Delete(ctx context.Context, id int64) error {
+func (p postService) Delete(ctx context.Context, id int64) error {
 	_, err := p.post.FindById(ctx, id)
 	if err != nil {
 		return err
@@ -70,7 +70,7 @@ func (p PostService) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (p PostService) Update(ctx context.Context, id int64, name string, tags []models.CreateTagParams) (*models.ImagePost, error) {
+func (p postService) Update(ctx context.Context, id int64, name string, tags []models.CreateTagParams) (*models.ImagePost, error) {
 	arg := models.UpdatePostParams{
 		ID:   id,
 		Name: name,
@@ -85,7 +85,7 @@ func (p PostService) Update(ctx context.Context, id int64, name string, tags []m
 	return &imgPost, nil
 }
 
-func (p PostService) GetMultiple(ctx context.Context, size, page int) ([]models.ImagePost, error) {
+func (p postService) GetMultiple(ctx context.Context, size, page int) ([]models.ImagePost, error) {
 	arg := models.ListImagesParams{
 		Limit:  size,
 		Offset: (page - 1) * size,
@@ -99,7 +99,7 @@ func (p PostService) GetMultiple(ctx context.Context, size, page int) ([]models.
 	return imgs, nil
 }
 
-func (p PostService) GetByUser(ctx context.Context, userId int64, size, page int) ([]models.ImagePost, error) {
+func (p postService) GetByUser(ctx context.Context, userId int64, size, page int) ([]models.ImagePost, error) {
 	arg := models.ListUserImagesParams{
 		UserID: userId,
 		Limit:  size,

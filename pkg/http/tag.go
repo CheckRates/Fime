@@ -12,6 +12,7 @@ import (
 
 type TagPort interface {
 	GetMultiple(ctx echo.Context) error
+	GetUserTags(ctx echo.Context) error
 }
 
 type tagApi struct {

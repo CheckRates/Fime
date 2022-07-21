@@ -6,18 +6,18 @@ import (
 	"github.com/checkrates/Fime/pkg/storage"
 )
 
-type TagService struct {
+type tagService struct {
 	tag storage.TagRepository
 }
 
 func NewTagService(tag storage.TagRepository) service.TagUsecase {
-	return TagService{
+	return tagService{
 		tag: tag,
 	}
 }
 
 // Takes a size and the page number to provide a subset of tags
-func (t TagService) GetMultiple(size, page int) ([]models.Tag, error) {
+func (t tagService) GetMultiple(size, page int) ([]models.Tag, error) {
 	arg := models.ListTagsParams{
 		Limit:  size,
 		Offset: (page - 1) * size,
@@ -32,7 +32,7 @@ func (t TagService) GetMultiple(size, page int) ([]models.Tag, error) {
 }
 
 // Takes a size and the page number to provide tags used by an user in all their posts
-func (t TagService) GetUserTags(userId int64, size, page int) ([]models.Tag, error) {
+func (t tagService) GetUserTags(userId int64, size, page int) ([]models.Tag, error) {
 	arg := models.ListUserTagsParams{
 		ID:     userId,
 		Limit:  size,

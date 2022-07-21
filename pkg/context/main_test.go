@@ -1,4 +1,4 @@
-package http
+package context
 
 /*
 func newTestServer(t *testing.T, store postgres.Store) *Server {
