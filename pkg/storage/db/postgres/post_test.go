@@ -10,7 +10,24 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func createTestImagePost(t *testing.T) models.ImagePost {
+// Test data access layer
+var dal Store
+
+func TestMain(m *testing.M) {
+	conn, err := sqlx.Open("postgres", config.New().Database.ConnString)
+	if err != nil {
+		log.Fatal("TEST: Cannot connect to the database: ", err)
+	}
+
+	dal, err = NewStore(conn)
+	os.Exit(m.Run())
+}
+
+/*
+*	Image Post Tests
+ */
+
+func createTestImagePost(t *testing.T) ImagePostResult {
 	var err error
 	user := createTestUser(t)
 
