@@ -1,0 +1,115 @@
+package post
+
+import (
+	"context"
+
+	"github.com/checkrates/Fime/pkg/models"
+	"github.com/checkrates/Fime/pkg/service"
+	"github.com/checkrates/Fime/pkg/storage"
+)
+
+type postService struct {
+	repo storage.PostRepository
+}
+
+func NewPostService(post storage.PostRepository) service.PostUsecase {
+	return postService{
+		repo: post,
+	}
+}
+
+func (p postService) Create(ctx context.Context, postData models.PostData) (*models.ImagePost, error) {
+	// Upload image to S3 bucket and get resource URL
+	//imgURL, err := server.UploadImage(encondedImg)
+	//if err != nil {
+	//	return ctx.JSON(http.StatusInternalServerError, errorResponse((err)))
+	//}
+	imgURL := "www.coolimage.com" // FIXME: Connect to AWS S3 bucket
+
+	arg := models.CreatePostParams{
+		Name:   postData.Name,
+		URL:    imgURL,
+		UserID: postData.UserId,
+		Tags:   postData.Tags,
+	}
+
+	imgPost, err := p.repo.Create(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &imgPost, nil
+}
+
+func (p postService) FindById(ctx context.Context, id int64) (*models.ImagePost, error) {
+	imgPost, err := p.repo.FindById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &imgPost, nil
+}
+
+func (p postService) Delete(ctx context.Context, id int64) error {
+	_, err := p.repo.FindById(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	// FIXME:
+	// Delete image in the S3 repo
+	// if err = server.DeleteImage(req.ID); err != nil {
+	//	return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	//}
+
+	err = p.repo.Delete(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p postService) Update(ctx context.Context, id int64, name string, tags []models.CreateTagParams) (*models.ImagePost, error) {
+	arg := models.UpdatePostParams{
+		ID:   id,
+		Name: name,
+		Tags: tags,
+	}
+
+	imgPost, err := p.repo.Update(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &imgPost, nil
+}
+
+func (p postService) GetMultiple(ctx context.Context, size, page int) ([]models.ImagePost, error) {
+	arg := models.ListImagesParams{
+		Limit:  size,
+		Offset: (page - 1) * size,
+	}
+
+	imgs, err := p.repo.GetMutiple(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+
+	return imgs, nil
+}
+
+func (p postService) GetByUser(ctx context.Context, userId int64, size, page int) ([]models.ImagePost, error) {
+	arg := models.ListUserImagesParams{
+		UserID: userId,
+		Limit:  size,
+		Offset: (page - 1) * size,
+	}
+
+	imgs, err := p.repo.GetByUser(ctx, arg)
+	if err != nil {
+		return nil, err
+
+	}
+	return imgs, nil
+}
