@@ -7,12 +7,12 @@ import (
 )
 
 type tagService struct {
-	tag storage.TagRepository
+	repo storage.TagRepository
 }
 
 func NewTagService(tag storage.TagRepository) service.TagUsecase {
 	return tagService{
-		tag: tag,
+		repo: tag,
 	}
 }
 
@@ -23,7 +23,7 @@ func (t tagService) GetMultiple(size, page int) ([]models.Tag, error) {
 		Offset: (page - 1) * size,
 	}
 
-	tags, err := t.tag.GetMultiple(arg)
+	tags, err := t.repo.GetMultiple(arg)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func (t tagService) GetUserTags(userId int64, size, page int) ([]models.Tag, err
 		Offset: (page - 1) * size,
 	}
 
-	tags, err := t.tag.GetUserTags(arg)
+	tags, err := t.repo.GetUserTags(arg)
 	if err != nil {
 		return nil, err
 	}

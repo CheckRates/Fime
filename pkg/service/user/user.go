@@ -9,14 +9,14 @@ import (
 )
 
 type userService struct {
-	user   storage.UserRepository
+	repo   storage.UserRepository
 	token  service.TokenMaker
 	config config.Config
 }
 
 func NewUserService(user storage.UserRepository, token service.TokenMaker, config config.Config) service.UserUsecase {
 	return userService{
-		user:   user,
+		repo:   user,
 		token:  token,
 		config: config,
 	}
@@ -36,7 +36,7 @@ func (u userService) Register(name, email, password string) (*models.UserRespons
 		HashedPassword: hashedPassword,
 	}
 
-	newUser, err := u.user.Create(userArgs)
+	newUser, err := u.repo.Create(userArgs)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (u userService) Register(name, email, password string) (*models.UserRespons
 
 // Login a user with email and password. Returns the user object and access token if successful
 func (u userService) Login(email, password string) (*models.UserResponse, string, error) {
-	retUser, err := u.user.FindByEmail(email)
+	retUser, err := u.repo.FindByEmail(email)
 	if err != nil {
 		return nil, "", err
 	}
@@ -68,7 +68,7 @@ func (u userService) Login(email, password string) (*models.UserResponse, string
 
 // Returns an user by id, if found
 func (u userService) FindById(id int64) (*models.UserResponse, error) {
-	user, err := u.user.FindById(id)
+	user, err := u.repo.FindById(id)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (u userService) GetMultiple(size, page int) ([]models.UserResponse, error) 
 		Offset: (page - 1) * size,
 	}
 
-	users, err := u.user.GetMultiple(arg)
+	users, err := u.repo.GetMultiple(arg)
 	if err != nil {
 		return nil, err
 	}

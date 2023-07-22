@@ -70,7 +70,11 @@ func TestGetImagesByTagID(t *testing.T) {
 	}
 
 	err = imageTag.Create(imgTag)
+	require.NoError(t, err)
+
 	err = imageTag.Create(imgTag2)
+	require.NoError(t, err)
+
 	retImgs, err := imageTag.GetImagesByTagID(tag.ID)
 
 	require.NoError(t, err)
@@ -88,6 +92,8 @@ func TestGetTagsByImage(t *testing.T) {
 	}
 
 	err = imageTag.Create(it)
+	require.NoError(t, err)
+
 	imgs, err := imageTag.GetImagesByTagID(tag.ID)
 
 	require.NoError(t, err)

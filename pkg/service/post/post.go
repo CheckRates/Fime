@@ -9,12 +9,12 @@ import (
 )
 
 type postService struct {
-	post storage.PostRepository
+	repo storage.PostRepository
 }
 
 func NewPostService(post storage.PostRepository) service.PostUsecase {
 	return postService{
-		post: post,
+		repo: post,
 	}
 }
 
@@ -33,7 +33,7 @@ func (p postService) Create(ctx context.Context, postData models.PostData) (*mod
 		Tags:   postData.Tags,
 	}
 
-	imgPost, err := p.post.Create(ctx, arg)
+	imgPost, err := p.repo.Create(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (p postService) Create(ctx context.Context, postData models.PostData) (*mod
 }
 
 func (p postService) FindById(ctx context.Context, id int64) (*models.ImagePost, error) {
-	imgPost, err := p.post.FindById(ctx, id)
+	imgPost, err := p.repo.FindById(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (p postService) FindById(ctx context.Context, id int64) (*models.ImagePost,
 }
 
 func (p postService) Delete(ctx context.Context, id int64) error {
-	_, err := p.post.FindById(ctx, id)
+	_, err := p.repo.FindById(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (p postService) Delete(ctx context.Context, id int64) error {
 	//	return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	//}
 
-	err = p.post.Delete(ctx, id)
+	err = p.repo.Delete(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func (p postService) Update(ctx context.Context, id int64, name string, tags []m
 		Tags: tags,
 	}
 
-	imgPost, err := p.post.Update(ctx, arg)
+	imgPost, err := p.repo.Update(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func (p postService) GetMultiple(ctx context.Context, size, page int) ([]models.
 		Offset: (page - 1) * size,
 	}
 
-	imgs, err := p.post.GetMutiple(ctx, arg)
+	imgs, err := p.repo.GetMutiple(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func (p postService) GetByUser(ctx context.Context, userId int64, size, page int
 		Offset: (page - 1) * size,
 	}
 
-	imgs, err := p.post.GetByUser(ctx, arg)
+	imgs, err := p.repo.GetByUser(ctx, arg)
 	if err != nil {
 		return nil, err
 
