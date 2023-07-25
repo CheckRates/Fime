@@ -3,6 +3,7 @@ package context
 import (
 	"github.com/checkrates/Fime/pkg/http"
 	"github.com/checkrates/Fime/pkg/service"
+	"github.com/checkrates/Fime/pkg/service/bucket"
 	"github.com/checkrates/Fime/pkg/service/post"
 	"github.com/checkrates/Fime/pkg/storage/db/postgres"
 	"github.com/jmoiron/sqlx"
@@ -12,6 +13,7 @@ import (
 func NewPostUsecase(db *sqlx.DB) service.PostUsecase {
 	return post.NewPostService(
 		postgres.NewPostRepository(db),
+		bucket.NewFileBucket("./tempImages"),
 	)
 }
 

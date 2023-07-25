@@ -28,6 +28,12 @@ type TagUsecase interface {
 	GetUserTags(userId int64, size, page int) ([]models.Tag, error)
 }
 
+type BucketUsecase interface {
+	RequestUpload(uploadParams models.RequestUploadParams) (string, error)
+	Get(id string) (string, error)
+	Delete(id string) error
+}
+
 type TokenMaker interface {
 	CreateAccess(userID int64, duration time.Duration) (string, error)
 	CreateRefresh(userID int64, duration time.Duration) (string, error)

@@ -9,26 +9,29 @@ import (
 )
 
 type postService struct {
-	repo storage.PostRepository
+	repo   storage.PostRepository
+	bucket service.BucketUsecase
 }
 
-func NewPostService(post storage.PostRepository) service.PostUsecase {
+func NewPostService(post storage.PostRepository, bucket service.BucketUsecase) service.PostUsecase {
 	return postService{
-		repo: post,
+		repo:   post,
+		bucket: bucket,
 	}
 }
 
 func (p postService) Create(ctx context.Context, postData models.PostData) (*models.ImagePost, error) {
-	// Upload image to S3 bucket and get resource URL
-	//imgURL, err := server.UploadImage(encondedImg)
-	//if err != nil {
-	//	return ctx.JSON(http.StatusInternalServerError, errorResponse((err)))
-	//}
-	imgURL := "www.coolimage.com" // FIXME: Connect to AWS S3 bucket
+	imgUrl, err := p.bucket.RequestUpload(models.RequestUploadParams{
+		Name:    postData.Name,
+		ImgData: postData.EncodedImg,
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	arg := models.CreatePostParams{
 		Name:   postData.Name,
-		URL:    imgURL,
+		URL:    imgUrl,
 		UserID: postData.UserId,
 		Tags:   postData.Tags,
 	}
@@ -51,16 +54,15 @@ func (p postService) FindById(ctx context.Context, id int64) (*models.ImagePost,
 }
 
 func (p postService) Delete(ctx context.Context, id int64) error {
-	_, err := p.repo.FindById(ctx, id)
+	imgPost, err := p.repo.FindById(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	// FIXME:
-	// Delete image in the S3 repo
-	// if err = server.DeleteImage(req.ID); err != nil {
-	//	return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-	//}
+	err = p.bucket.Delete(imgPost.Image.URL)
+	if err != nil {
+		return err
+	}
 
 	err = p.repo.Delete(ctx, id)
 	if err != nil {
