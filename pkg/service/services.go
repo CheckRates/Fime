@@ -29,7 +29,7 @@ type TagUsecase interface {
 }
 
 type BucketUsecase interface {
-	RequestUpload(uploadParams models.RequestUploadParams) (string, error)
+	RequestUpload(uploadParams models.RequestUploadParams) (*models.RequestUploadResponse, error)
 	Get(id string) (string, error)
 	Delete(id string) error
 }

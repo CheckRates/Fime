@@ -21,9 +21,10 @@ func NewPostService(post storage.PostRepository, bucket service.BucketUsecase) s
 }
 
 func (p postService) Create(ctx context.Context, postData models.PostData) (*models.ImagePost, error) {
-	imgUrl, err := p.bucket.RequestUpload(models.RequestUploadParams{
-		Name:    postData.Name,
-		ImgData: postData.EncodedImg,
+	imgMeta, err := p.bucket.RequestUpload(models.RequestUploadParams{
+		Filename:   postData.Name,
+		UserID:     postData.UserId,
+		Fileheader: postData.EncodedImg,
 	})
 	if err != nil {
 		return nil, err
@@ -31,7 +32,7 @@ func (p postService) Create(ctx context.Context, postData models.PostData) (*mod
 
 	arg := models.CreatePostParams{
 		Name:   postData.Name,
-		URL:    imgUrl,
+		URL:    imgMeta.ImageKey,
 		UserID: postData.UserId,
 		Tags:   postData.Tags,
 	}

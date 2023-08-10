@@ -1,5 +1,6 @@
 package bucket
 
+/*
 import (
 	"bytes"
 	"encoding/base64"
@@ -81,3 +82,4 @@ func (b fileBucketService) uploadImage(encodedImgData string) (string, error) {
 	}
 	return imagePath, nil
 }
+*/
