@@ -3,7 +3,6 @@ module github.com/checkrates/Fime
 go 1.20
 
 require (
-	github.com/aws/aws-sdk-go v1.44.319
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.32
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-playground/validator/v10 v10.14.1
