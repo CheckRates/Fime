@@ -52,7 +52,7 @@ func (s *PostSQL) Create(ctx context.Context, arg models.CreatePostParams) (mode
 		var err error
 
 		imageArgs := models.CreateImageParams{
-			Name:    arg.Name,
+			Name:    arg.Filename,
 			URL:     arg.URL,
 			OwnerID: arg.UserID,
 		}

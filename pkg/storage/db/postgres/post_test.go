@@ -27,10 +27,10 @@ func createTestImagePost(t *testing.T) models.ImagePost {
 	}
 
 	postArgs := models.CreatePostParams{
-		Name:   "IMG_2020",
-		URL:    "www.coolImage.com",
-		UserID: user.ID,
-		Tags:   tagsArgs,
+		Filename: "IMG_2020",
+		URL:      "www.coolImage.com",
+		UserID:   user.ID,
+		Tags:     tagsArgs,
 	}
 
 	newPost, err := post.Create(context.Background(), postArgs)
@@ -38,7 +38,7 @@ func createTestImagePost(t *testing.T) models.ImagePost {
 	require.NoError(t, err)
 	require.NotZero(t, newPost.Image.ID)
 
-	require.Equal(t, newPost.Image.Name, postArgs.Name)
+	require.Equal(t, newPost.Image.Name, postArgs.Filename)
 	require.Equal(t, newPost.Image.URL, postArgs.URL)
 	require.Equal(t, newPost.Image.OwnerID, postArgs.UserID)
 	require.Equal(t, len(newPost.Tags), len(postArgs.Tags))

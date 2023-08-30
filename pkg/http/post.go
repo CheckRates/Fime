@@ -11,12 +11,9 @@ import (
 	"github.com/labstack/echo"
 )
 
-// errorResponse formats error to Echo
-func errorResponse(err error) echo.Map {
-	return echo.Map{"error": err.Error()}
-}
-
 type PostPort interface {
+	InitiateUpload(ctx echo.Context) error
+	GetUploadURLs(ctx echo.Context) error
 	Create(ctx echo.Context) error
 	FindById(ctx echo.Context) error
 	Delete(ctx echo.Context) error
@@ -36,10 +33,78 @@ func NewPostApi(post service.PostUsecase) PostPort {
 	}
 }
 
+type startUploadRequest struct {
+	Filename         string `json:"filename"`
+	EncodedImgHeader string `json:"imageHeaderBase64"`
+	ImageSize        int64  `json:"imageSize"`
+}
+
+func (p postApi) InitiateUpload(ctx echo.Context) error {
+	var req *startUploadRequest
+	if err := ctx.Bind(&req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
+	}
+
+	if err := ctx.Validate(req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
+	}
+
+	// Retrieve the authenticated user
+	authPayload := ctx.Get(authPayloadKey).(*models.Payload)
+	if authPayload == nil {
+		err := errors.New("cannot retrived user if not authenticated")
+		return ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+	}
+
+	arg := models.RequestUploadParams{
+		Filename:         req.Filename,
+		EncodedImgHeader: req.EncodedImgHeader,
+		ImageSize:        req.ImageSize,
+		UserId:           authPayload.UserID,
+	}
+
+	resp, err := p.post.RequestUpload(ctx.Request().Context(), arg)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, err)
+	}
+
+	return ctx.JSON(http.StatusOK, resp)
+}
+
+type getUploadUrlsRequest struct {
+	UploadId string `json:"uploadId"`
+	NumParts int32  `json:"numParts"`
+}
+
+func (p postApi) GetUploadURLs(ctx echo.Context) error {
+	var req *getUploadUrlsRequest
+	if err := ctx.Bind(&req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
+	}
+
+	if err := ctx.Validate(req); err != nil {
+		return ctx.JSON(http.StatusBadRequest, errorResponse(err))
+	}
+
+	// Retrieve the authenticated user
+	authPayload := ctx.Get(authPayloadKey).(*models.Payload)
+	if authPayload == nil {
+		err := errors.New("cannot retrived user if not authenticated")
+		return ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+	}
+
+	urls, err := p.post.GetUploadURLs(ctx.Request().Context(), req.UploadId, req.NumParts)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, err)
+	}
+
+	return ctx.JSON(http.StatusOK, urls)
+}
+
 type postImageRequest struct {
-	Name       string                   `json:"name"`
-	EncodedImg string                   `json:"image"`
-	Tags       []models.CreateTagParams `json:"tags"`
+	Filename string                   `json:"name"`
+	UploadID string                   `json:"uploadId"`
+	Tags     []models.CreateTagParams `json:"tags"`
 }
 
 func (p postApi) Create(ctx echo.Context) error {
@@ -59,12 +124,14 @@ func (p postApi) Create(ctx echo.Context) error {
 		return ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 	}
 
-	imgPost, err := p.post.Create(ctx.Request().Context(), models.PostData{
-		Name:       req.Name,
-		EncodedImg: req.EncodedImg,
-		UserId:     authPayload.UserID,
-		Tags:       req.Tags,
-	})
+	arg := models.CompleteUploadParams{
+		Filename: req.Filename,
+		UploadID: req.UploadID,
+		UserID:   authPayload.UserID,
+		Tags:     req.Tags,
+	}
+
+	imgPost, err := p.post.CompleteUpload(ctx.Request().Context(), arg)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}

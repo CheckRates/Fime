@@ -1,12 +1,19 @@
 package models
 
-type RequestUploadParams struct {
-	Filename   string `json:"filename"`
-	UserID     int64  `json:"userId"`
-	Fileheader string `json:"fileheader"`
+import "net/http"
+
+type InitiateUploadParams struct {
+	Filename   string
+	UserID     int64
+	Fileheader string
 }
 
-type RequestUploadResponse struct {
-	UploadId string `json:"uploadId"`
-	ImageKey string `json:"imageKey"`
+type InitiateUploadResponse struct {
+	UploadId string
+	ImageKey string
+}
+
+type PresignedURL struct {
+	Header http.Header `json:"header"`
+	URL    string      `json:"URL"`
 }

@@ -5,20 +5,32 @@ type ImagePost struct {
 	Tags  []Tag `json:"tags"`
 }
 
-// Provides all data to create a post in a service/usecase
-type PostData struct {
-	Name       string
-	EncodedImg string
-	UserId     int64
-	Tags       []CreateTagParams
+type RequestUploadParams struct {
+	Filename         string `json:"filename"`
+	EncodedImgHeader string `json:"imageHeaderBase64"`
+	ImageSize        int64  `json:"imageSize"`
+	UserId           int64  `json:"userId"`
 }
 
-// Provides all data for saving a image post in a repository
+type RequestUploadResponse struct {
+	Filename string `json:"filename"`
+	NumParts int    `json:"numParts"`
+	UploadId string `json:"uploadId"`
+	ImageKey string `json:"imageKey"`
+}
+
+type CompleteUploadParams struct {
+	Filename string            `json:"filename"`
+	UploadID string            `json:"uploadId"`
+	UserID   int64             `json:"ownerID"`
+	Tags     []CreateTagParams `json:"tags"`
+}
+
 type CreatePostParams struct {
-	Name   string            `json:"name"`
-	URL    string            `json:"url"`
-	UserID int64             `json:"ownerID"`
-	Tags   []CreateTagParams `json:"tags"`
+	Filename string            `json:"filename"`
+	URL      string            `json:"url"`
+	UserID   int64             `json:"ownerID"`
+	Tags     []CreateTagParams `json:"tags"`
 }
 
 type UpdatePostParams struct {
