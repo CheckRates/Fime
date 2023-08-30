@@ -32,7 +32,6 @@ type restServer struct {
 	config   config.Config
 	router   *echo.Echo
 	database *sqlx.DB
-	//aws      *session.Session
 
 	ports struct {
 		user http.UserPort
@@ -61,7 +60,13 @@ func NewServer(config config.Config) (Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	s.ports.post = context.NewPostPort(s.database)
+	s.ports.post = context.NewPostPort(
+		s.database,
+		config.S3.Region,
+		config.S3.Bucket,
+		config.S3.Access,
+		config.S3.Secret,
+	)
 	s.ports.tag = context.NewTagPort(s.database)
 
 	// Start services

@@ -10,16 +10,16 @@ import (
 )
 
 // Returns a new instance of the post usecase
-func NewPostUsecase(db *sqlx.DB) service.PostUsecase {
+func NewPostUsecase(db *sqlx.DB, region, bucketName, accessId, secret string) service.PostUsecase {
 	return post.NewPostService(
 		postgres.NewPostRepository(db),
-		bucket.NewFileBucket("./tempImages"),
+		bucket.NewS3Service(region, bucketName, accessId, secret),
 	)
 }
 
 // Returns a new HTTP implementation of the postPort
-func NewPostPort(db *sqlx.DB) http.PostPort {
+func NewPostPort(db *sqlx.DB, region, bucket, accessId, secret string) http.PostPort {
 	return http.NewPostApi(
-		NewPostUsecase(db),
+		NewPostUsecase(db, region, bucket, accessId, secret),
 	)
 }

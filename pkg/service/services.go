@@ -8,7 +8,9 @@ import (
 )
 
 type PostUsecase interface {
-	Create(ctx context.Context, postData models.PostData) (*models.ImagePost, error)
+	RequestUpload(ctx context.Context, req models.RequestUploadParams) (*models.RequestUploadResponse, error)
+	GetUploadURLs(ctx context.Context, uploadId string, numParts int32) ([]models.PresignedURL, error)
+	CompleteUpload(ctx context.Context, req models.CompleteUploadParams) (*models.ImagePost, error)
 	FindById(ctx context.Context, id int64) (*models.ImagePost, error)
 	Delete(ctx context.Context, id int64) error
 	Update(ctx context.Context, id int64, name string, tags []models.CreateTagParams) (*models.ImagePost, error)
@@ -29,9 +31,11 @@ type TagUsecase interface {
 }
 
 type BucketUsecase interface {
-	RequestUpload(uploadParams models.RequestUploadParams) (string, error)
-	Get(id string) (string, error)
-	Delete(id string) error
+	InitiateUpload(ctx context.Context, uploadParams models.InitiateUploadParams) (*models.InitiateUploadResponse, error)
+	GeneratePresignURLs(ctx context.Context, uploadId string, numParts int32) ([]models.PresignedURL, error)
+	CompleteUpload(ctx context.Context, uploadId string) (string, error)
+	AbortUpload(ctx context.Context, imageKey string, uploadId string) error
+	Delete(ctx context.Context, key string) error
 }
 
 type TokenMaker interface {

@@ -49,3 +49,8 @@ func AuthMiddleware(tokenMaker service.TokenMaker) echo.MiddlewareFunc {
 		}
 	}
 }
+
+// errorResponse formats error to Echo
+func errorResponse(err error) echo.Map {
+	return echo.Map{"error": err.Error()}
+}

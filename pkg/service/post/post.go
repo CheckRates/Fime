@@ -2,7 +2,10 @@ package post
 
 import (
 	"context"
+	"fmt"
+	"math"
 
+	"github.com/checkrates/Fime/pkg/filetype"
 	"github.com/checkrates/Fime/pkg/models"
 	"github.com/checkrates/Fime/pkg/service"
 	"github.com/checkrates/Fime/pkg/storage"
@@ -13,6 +16,9 @@ type postService struct {
 	bucket service.BucketUsecase
 }
 
+// in Megabytes
+const sizeImageChunk = 5000 // TODO: Change
+
 func NewPostService(post storage.PostRepository, bucket service.BucketUsecase) service.PostUsecase {
 	return postService{
 		repo:   post,
@@ -20,20 +26,56 @@ func NewPostService(post storage.PostRepository, bucket service.BucketUsecase) s
 	}
 }
 
-func (p postService) Create(ctx context.Context, postData models.PostData) (*models.ImagePost, error) {
-	imgUrl, err := p.bucket.RequestUpload(models.RequestUploadParams{
-		Name:    postData.Name,
-		ImgData: postData.EncodedImg,
+func (p postService) RequestUpload(ctx context.Context, req models.RequestUploadParams) (*models.RequestUploadResponse, error) {
+	valid, err := filetype.IsValid(req.EncodedImgHeader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read image file")
+	}
+	if !valid {
+		return nil, fmt.Errorf("image file type not supported")
+	}
+
+	imgMeta, err := p.bucket.InitiateUpload(ctx, models.InitiateUploadParams{
+		Filename:   req.Filename,
+		UserID:     req.UserId,
+		Fileheader: req.EncodedImgHeader,
 	})
 	if err != nil {
 		return nil, err
 	}
 
+	// Determine number of image chunks, therefore number of presigned URLs necessary
+	// to upload the requested image
+	numURLs := math.Ceil(float64(req.ImageSize) / sizeImageChunk)
+
+	return &models.RequestUploadResponse{
+		Filename: req.Filename,
+		NumParts: int(numURLs),
+		UploadId: imgMeta.UploadId,
+		ImageKey: imgMeta.ImageKey,
+	}, nil
+}
+
+func (p postService) GetUploadURLs(ctx context.Context, uploadId string, numParts int32) ([]models.PresignedURL, error) {
+	urls, err := p.bucket.GeneratePresignURLs(ctx, uploadId, numParts)
+	if err != nil {
+		return nil, err
+	}
+
+	return urls, nil
+}
+
+func (p postService) CompleteUpload(ctx context.Context, req models.CompleteUploadParams) (*models.ImagePost, error) {
+	url, err := p.bucket.CompleteUpload(ctx, req.UploadID)
+	if err != nil {
+		return nil, err
+	}
+
 	arg := models.CreatePostParams{
-		Name:   postData.Name,
-		URL:    imgUrl,
-		UserID: postData.UserId,
-		Tags:   postData.Tags,
+		Filename: req.Filename,
+		URL:      url,
+		UserID:   req.UserID,
+		Tags:     req.Tags,
 	}
 
 	imgPost, err := p.repo.Create(ctx, arg)
@@ -59,7 +101,7 @@ func (p postService) Delete(ctx context.Context, id int64) error {
 		return err
 	}
 
-	err = p.bucket.Delete(imgPost.Image.URL)
+	err = p.bucket.Delete(ctx, imgPost.Image.URL)
 	if err != nil {
 		return err
 	}
