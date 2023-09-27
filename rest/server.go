@@ -60,13 +60,16 @@ func NewServer(config config.Config) (Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	s.ports.post = context.NewPostPort(
+	s.ports.post, err = context.NewPostPort(
 		s.database,
 		config.S3.Region,
 		config.S3.Bucket,
 		config.S3.Access,
 		config.S3.Secret,
 	)
+	if err != nil {
+		return nil, err
+	}
 	s.ports.tag = context.NewTagPort(s.database)
 
 	// Start services
